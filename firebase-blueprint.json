@@ -1,0 +1,207 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User preferences and profile details",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "language": {
+          "type": "string"
+        },
+        "favoriteTopics": {
+          "type": "array"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "email"
+      ]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "User comments and replies on news articles",
+      "type": "object",
+      "properties": {
+        "articleId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "userEmail": {
+          "type": "string"
+        },
+        "userName": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "articleTitle": {
+          "type": "string"
+        },
+        "articleImageUrl": {
+          "type": "string"
+        },
+        "parentId": {
+          "type": "string"
+        },
+        "parentAuthorId": {
+          "type": "string"
+        },
+        "replyToName": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "articleId",
+        "userId",
+        "userEmail",
+        "userName",
+        "content",
+        "createdAt"
+      ]
+    },
+    "History": {
+      "title": "History",
+      "description": "User news reading and video watching history",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "articleId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "imageUrl": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["news", "video", "podcast"]
+        },
+        "pubDate": {
+          "type": "string"
+        },
+        "creator": {
+          "type": "string"
+        },
+        "link": {
+          "type": "string"
+        },
+        "contentSnippet": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "videoId": {
+          "type": "string"
+        },
+        "audioUrl": {
+          "type": "string"
+        },
+        "viewedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "userId",
+        "articleId",
+        "title",
+        "imageUrl",
+        "type",
+        "pubDate",
+        "viewedAt"
+      ]
+    },
+    "Article": {
+      "title": "Article",
+      "description": "Persisted original InnovaTech journalistic articles",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "link": {
+          "type": "string"
+        },
+        "pubDate": {
+          "type": "string"
+        },
+        "creator": {
+          "type": "string"
+        },
+        "contentSnippet": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "imageUrl": {
+          "type": "string"
+        },
+        "categories": {
+          "type": "array"
+        },
+        "topic": {
+          "type": "string"
+        },
+        "lang": {
+          "type": "string"
+        },
+        "sourceUrl": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "content",
+        "pubDate",
+        "creator",
+        "topic",
+        "lang"
+      ]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User preferences collection"
+    },
+    "comments/{commentId}": {
+      "schema": "Comment",
+      "description": "Article comments collection"
+    },
+    "history/{historyId}": {
+      "schema": "History",
+      "description": "User reading history collection"
+    },
+    "articles/{articleId}": {
+      "schema": "Article",
+      "description": "Persisted InnovaTech news articles collection"
+    }
+  }
+}

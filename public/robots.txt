@@ -1,0 +1,34 @@
+# Robots.txt for InnovaTech (https://innovatech.fun)
+# Fully accessible for Google Search, Google News, Google Images & Google AdSense
+
+User-agent: *
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-News
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Mediapartners-Google
+Allow: /
+
+User-agent: AdsBot-Google
+Allow: /
+
+User-agent: AdsBot-Google-Mobile
+Allow: /
+
+User-agent: Google-InspectionTool
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Storebot-Google
+Allow: /
+
+Sitemap: https://innovatech.fun/sitemap.xml

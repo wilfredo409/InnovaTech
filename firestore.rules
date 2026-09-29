@@ -1,0 +1,108 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global safety net - default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Validation for User profile
+    function isValidUser(data) {
+      return (data.email == null || (data.email is string && data.email.size() <= 256))
+        && (data.language == null || (data.language is string && data.language.size() <= 10))
+        && (data.favoriteTopics == null || (data.favoriteTopics is list && data.favoriteTopics.size() <= 10))
+        && (data.updatedAt == null || data.updatedAt is timestamp);
+    }
+
+    // Validation for Comments
+    function isValidComment(data) {
+      return data.keys().hasAll(['articleId', 'userId', 'userEmail', 'userName', 'content', 'createdAt'])
+        && data.keys().size() >= 6 && data.keys().size() <= 11
+        && data.articleId is string && data.articleId.size() <= 256
+        && data.userId is string && data.userId == request.auth.uid
+        && data.userEmail is string && data.userEmail.size() <= 256
+        && data.userName is string && data.userName.size() <= 256
+        && data.content is string && data.content.size() <= 1000
+        && data.createdAt is timestamp
+        && (data.articleTitle == null || (data.articleTitle is string && data.articleTitle.size() <= 500))
+        && (data.articleImageUrl == null || (data.articleImageUrl is string && data.articleImageUrl.size() <= 1000))
+        && (data.parentId == null || (data.parentId is string && data.parentId.size() <= 128))
+        && (data.parentAuthorId == null || (data.parentAuthorId is string && data.parentAuthorId.size() <= 128))
+        && (data.replyToName == null || (data.replyToName is string && data.replyToName.size() <= 256));
+    }
+
+    // Validation for History
+    function isValidHistory(data) {
+      return data.keys().hasAll(['userId', 'articleId', 'title', 'imageUrl', 'type', 'pubDate', 'viewedAt'])
+        && data.keys().size() >= 7 && data.keys().size() <= 13
+        && data.userId is string && data.userId == request.auth.uid
+        && data.articleId is string && data.articleId.size() <= 256
+        && data.title is string && data.title.size() <= 500
+        && data.imageUrl is string && data.imageUrl.size() <= 1000
+        && data.type is string && (data.type == 'news' || data.type == 'video' || data.type == 'podcast')
+        && data.pubDate is string && data.pubDate.size() <= 100
+        && data.viewedAt is timestamp
+        && (data.creator == null || (data.creator is string && data.creator.size() <= 256))
+        && (data.link == null || (data.link is string && data.link.size() <= 2048))
+        && (data.contentSnippet == null || (data.contentSnippet is string && data.contentSnippet.size() <= 10000))
+        && (data.content == null || (data.content is string && data.content.size() <= 100000))
+        && (data.videoId == null || (data.videoId is string && data.videoId.size() <= 128))
+        && (data.audioUrl == null || (data.audioUrl is string && data.audioUrl.size() <= 2048));
+    }
+
+    // Match rules for users
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && isValidUser(request.resource.data);
+    }
+
+    // Match rules for comments
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidId(commentId) && isValidComment(request.resource.data);
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if false; // Comments are immutable
+    }
+
+    // Match rules for history
+    match /history/{historyId} {
+      allow read: if isSignedIn() && (resource == null || ('userId' in resource.data && resource.data.userId == request.auth.uid));
+      allow create, update: if isSignedIn() && isValidId(historyId) && isValidHistory(request.resource.data);
+      allow delete: if isSignedIn() && resource != null && 'userId' in resource.data && resource.data.userId == request.auth.uid;
+    }
+
+    // Validation for Article
+    function isValidArticle(data) {
+      return data.keys().hasAll(['id', 'title', 'content', 'pubDate', 'creator', 'topic', 'lang'])
+        && data.id is string && data.id.size() <= 128
+        && data.title is string && data.title.size() <= 500
+        && data.content is string && data.content.size() <= 100000
+        && data.pubDate is string && data.pubDate.size() <= 100
+        && data.creator is string && data.creator.size() <= 256
+        && data.topic is string && data.topic.size() <= 64
+        && data.lang is string && data.lang.size() <= 10;
+    }
+
+    // Match rules for persisted InnovaTech articles
+    match /articles/{articleId} {
+      allow read: if true;
+      allow create, update: if isValidId(articleId) && isValidArticle(request.resource.data);
+      allow delete: if false; // Articles are preserved permanently in the database
+    }
+  }
+}

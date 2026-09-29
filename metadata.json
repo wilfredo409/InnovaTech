@@ -1,0 +1,6 @@
+{
+  "name": "InnovaTech",
+  "description": "A modern, native-feeling technology news aggregator featuring latest updates on hardware, software, AI and gadgets with an elegant reading experience.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
