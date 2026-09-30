@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface AdSenseBannerProps {
   client?: string;
@@ -11,8 +11,26 @@ interface AdSenseBannerProps {
 }
 
 /**
+ * Checks whether user has explicitly consented to marketing/advertising cookies.
+ * Google AdSense CMP Policy requires strict pre-consent blocking.
+ */
+function hasMarketingConsent(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const saved = localStorage.getItem('innovatech_cookie_consent');
+    if (!saved) return false; // Strictly blocked until consent is given
+    const parsed = JSON.parse(saved);
+    return !!parsed.marketing;
+  } catch {
+    const legacy = localStorage.getItem('innovatech_cookie_consent_legacy');
+    return legacy === 'all';
+  }
+}
+
+/**
  * Responsive Google AdSense Banner Component
- * Follows Google AdSense Publisher Policies:
+ * Follows Google AdSense Publisher & CMP Policies:
+ * - Strictly blocks rendering and script execution until marketing consent is granted
  * - Only renders on screens with substantial, high-value publisher content
  * - Does not render on navigation, loading, empty, or modal screens
  * - Safe initialization with error boundaries
@@ -28,6 +46,25 @@ export const AdSenseBanner: React.FC<AdSenseBannerProps> = ({
 }) => {
   const adRef = useRef<HTMLModElement>(null);
   const pushedRef = useRef(false);
+  const [consentGranted, setConsentGranted] = useState<boolean>(() => hasMarketingConsent());
+
+  useEffect(() => {
+    const handleConsentUpdate = (e: any) => {
+      if (e?.detail?.marketing !== undefined) {
+        setConsentGranted(!!e.detail.marketing);
+      } else {
+        setConsentGranted(hasMarketingConsent());
+      }
+    };
+
+    window.addEventListener('cookie-consent-updated', handleConsentUpdate);
+    return () => window.removeEventListener('cookie-consent-updated', handleConsentUpdate);
+  }, []);
+
+  // Pre-consent blocking: strictly do not render or execute if consent is not granted
+  if (!consentGranted) {
+    return null;
+  }
 
   // If content is provided and too short, do not display ad to prevent "No content" policy violation
   if (content && content.replace(/<[^>]*>/g, '').trim().length < minContentLength) {
@@ -35,6 +72,8 @@ export const AdSenseBanner: React.FC<AdSenseBannerProps> = ({
   }
 
   useEffect(() => {
+    if (!consentGranted) return;
+
     const timer = setTimeout(() => {
       try {
         if (!pushedRef.current && adRef.current && adRef.current.isConnected) {
@@ -47,7 +86,7 @@ export const AdSenseBanner: React.FC<AdSenseBannerProps> = ({
     }, 200);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [consentGranted]);
 
   return (
     <div className={`w-full my-6 text-center overflow-hidden min-h-[90px] flex flex-col items-center justify-center ${className}`}>
@@ -69,7 +108,7 @@ export const AdSenseBanner: React.FC<AdSenseBannerProps> = ({
 
 /**
  * In-Feed Google AdSense Native Ad
- * Only displayed in feeds with at least 4 loaded editorial articles
+ * Strictly blocked until CMP consent is established
  */
 export const InFeedAd: React.FC<{ client?: string; slot?: string; className?: string; articleCount?: number }> = ({
   client = 'ca-pub-9020993400158462',
@@ -79,13 +118,28 @@ export const InFeedAd: React.FC<{ client?: string; slot?: string; className?: st
 }) => {
   const adRef = useRef<HTMLModElement>(null);
   const pushedRef = useRef(false);
+  const [consentGranted, setConsentGranted] = useState<boolean>(() => hasMarketingConsent());
 
-  // Never render in empty or sparse feeds
-  if (articleCount < 4) {
+  useEffect(() => {
+    const handleConsentUpdate = (e: any) => {
+      if (e?.detail?.marketing !== undefined) {
+        setConsentGranted(!!e.detail.marketing);
+      } else {
+        setConsentGranted(hasMarketingConsent());
+      }
+    };
+
+    window.addEventListener('cookie-consent-updated', handleConsentUpdate);
+    return () => window.removeEventListener('cookie-consent-updated', handleConsentUpdate);
+  }, []);
+
+  if (!consentGranted || articleCount < 4) {
     return null;
   }
 
   useEffect(() => {
+    if (!consentGranted) return;
+
     const timer = setTimeout(() => {
       try {
         if (!pushedRef.current && adRef.current && adRef.current.isConnected) {
@@ -97,7 +151,7 @@ export const InFeedAd: React.FC<{ client?: string; slot?: string; className?: st
       }
     }, 200);
     return () => clearTimeout(timer);
-  }, []);
+  }, [consentGranted]);
 
   return (
     <div className={`mb-6 break-inside-avoid rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 min-h-[140px] flex flex-col items-center justify-center text-center ${className}`}>
@@ -119,7 +173,7 @@ export const InFeedAd: React.FC<{ client?: string; slot?: string; className?: st
 
 /**
  * In-Article Google AdSense Unit
- * Strictly guarded to only show when there is substantial editorial text on both sides
+ * Strictly guarded to only show with substantial editorial content and explicit CMP consent
  */
 export const InArticleAd: React.FC<{
   client?: string;
@@ -134,13 +188,28 @@ export const InArticleAd: React.FC<{
 }) => {
   const adRef = useRef<HTMLModElement>(null);
   const pushedRef = useRef(false);
+  const [consentGranted, setConsentGranted] = useState<boolean>(() => hasMarketingConsent());
 
-  // If content is not sufficient or missing, do not render ad
-  if (!hasSufficientContent) {
+  useEffect(() => {
+    const handleConsentUpdate = (e: any) => {
+      if (e?.detail?.marketing !== undefined) {
+        setConsentGranted(!!e.detail.marketing);
+      } else {
+        setConsentGranted(hasMarketingConsent());
+      }
+    };
+
+    window.addEventListener('cookie-consent-updated', handleConsentUpdate);
+    return () => window.removeEventListener('cookie-consent-updated', handleConsentUpdate);
+  }, []);
+
+  if (!consentGranted || !hasSufficientContent) {
     return null;
   }
 
   useEffect(() => {
+    if (!consentGranted) return;
+
     const timer = setTimeout(() => {
       try {
         if (!pushedRef.current && adRef.current && adRef.current.isConnected) {
@@ -152,7 +221,7 @@ export const InArticleAd: React.FC<{
       }
     }, 200);
     return () => clearTimeout(timer);
-  }, []);
+  }, [consentGranted]);
 
   return (
     <div className={`my-8 p-4 rounded-2xl bg-gray-50/50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 text-center ${className}`}>

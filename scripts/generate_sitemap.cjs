@@ -16,13 +16,19 @@ if (fs.existsSync(articlesPath)) {
 
 const today = new Date().toISOString().split('T')[0];
 
-const topics = ['ai', 'hardware', 'software', 'gadgets', 'cybersecurity', 'podcasts', 'videos', 'events', 'reviews'];
+// Only canonical Spanish categories
+const canonicalTopics = [
+  { slug: 'ia', alt: 'ai', priority: '0.85' },
+  { slug: 'hardware', priority: '0.85' },
+  { slug: 'software', priority: '0.85' },
+  { slug: 'gadgets', priority: '0.85' },
+  { slug: 'ciberseguridad', alt: 'cybersecurity', priority: '0.85' }
+];
 
 let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
-        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
-  <!-- Core Portal Pages -->
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <!-- Core Institutional Pages (Spanish Canonical) -->
   <url>
     <loc>https://innovatech.fun/</loc>
     <lastmod>${today}</lastmod>
@@ -30,68 +36,60 @@ let xml = `<?xml version="1.0" encoding="UTF-8"?>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://innovatech.fun/acerca-de.html</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://innovatech.fun/acerca-de</loc>
     <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://innovatech.fun/contacto.html</loc>
+    <loc>https://innovatech.fun/privacidad</loc>
     <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://innovatech.fun/contacto</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://innovatech.fun/privacy.html</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://innovatech.fun/privacy</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://innovatech.fun/terminos.html</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.85</priority>
   </url>
   <url>
     <loc>https://innovatech.fun/terminos</loc>
     <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.85</priority>
   </url>
-`;
-
-// Category Sections
-topics.forEach(t => {
-  xml += `  <url>
-    <loc>https://innovatech.fun/categoria/${t}</loc>
+  <url>
+    <loc>https://innovatech.fun/contacto</loc>
     <lastmod>${today}</lastmod>
-    <changefreq>daily</changefreq>
+    <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
 `;
+
+// Canonical Category Sections
+canonicalTopics.forEach(t => {
+  xml += `  <url>
+    <loc>https://innovatech.fun/categoria/${t.slug}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>${t.priority}</priority>
+  </url>
+`;
+  if (t.alt) {
+    xml += `  <url>
+    <loc>https://innovatech.fun/categoria/${t.alt}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.80</priority>
+  </url>
+`;
+  }
 });
 
-// All Article Entries
-articles.forEach(art => {
+// Sort articles chronologically descending (newest first)
+const sortedArticles = [...articles].sort((a, b) => {
+  const dateA = new Date(a.pubDate || '2026-09-01').getTime();
+  const dateB = new Date(b.pubDate || '2026-09-01').getTime();
+  return dateB - dateA;
+});
+
+// All Article Entries with natural September 2026 progression
+sortedArticles.forEach(art => {
   let pubDate = today;
   try {
     if (art.pubDate) {
@@ -100,7 +98,11 @@ articles.forEach(art => {
   } catch (e) {
     pubDate = today;
   }
-  const cleanTitle = (art.title || 'Noticia Tecnológica').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const cleanTitle = (art.title || 'Noticia Tecnológica')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
   
   xml += `  <url>
     <loc>https://innovatech.fun/articulo/${encodeURIComponent(art.id)}</loc>
@@ -124,5 +126,12 @@ articles.forEach(art => {
 
 xml += `</urlset>\n`;
 
-fs.writeFileSync(path.join(__dirname, '..', 'public', 'sitemap.xml'), xml, 'utf8');
-console.log(`Generated sitemap.xml with ${articles.length} articles and ${topics.length} category sections.`);
+const publicDest = path.join(__dirname, '..', 'public', 'sitemap.xml');
+fs.writeFileSync(publicDest, xml, 'utf8');
+
+const distDest = path.join(__dirname, '..', 'dist', 'sitemap.xml');
+if (fs.existsSync(path.dirname(distDest))) {
+  fs.writeFileSync(distDest, xml, 'utf8');
+}
+
+console.log(`[Sitemap] Generated clean Spanish canonical sitemap.xml with ${sortedArticles.length} chronologically sorted articles.`);

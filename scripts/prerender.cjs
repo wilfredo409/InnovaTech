@@ -17,14 +17,27 @@ if (fs.existsSync(articlesFile)) {
   }
 }
 
-const TOPIC_LABELS = {
-  ai: 'Inteligencia Artificial',
-  hardware: 'Hardware y Componentes',
-  software: 'Software y Desarrollo',
-  gadgets: 'Gadgets y Móviles',
-  cybersecurity: 'Ciberseguridad',
-  latest: 'Últimas Noticias'
-};
+// Clean up any old duplicate English directories from dist/
+const legacyDirsToDelete = ['about', 'terms', 'contact', 'privacy', 'category'];
+legacyDirsToDelete.forEach(dirName => {
+  const targetDir = path.join(distDir, dirName);
+  if (fs.existsSync(targetDir)) {
+    try {
+      fs.rmSync(targetDir, { recursive: true, force: true });
+    } catch {}
+  }
+});
+
+const TOPIC_CONFIG = [
+  { slug: 'ia', label: 'Inteligencia Artificial', match: ['ai', 'ia'] },
+  { slug: 'ai', label: 'Inteligencia Artificial', match: ['ai', 'ia'] },
+  { slug: 'hardware', label: 'Hardware y Componentes', match: ['hardware'] },
+  { slug: 'software', label: 'Software y Desarrollo', match: ['software'] },
+  { slug: 'gadgets', label: 'Smartphones y Gadgets', match: ['gadgets'] },
+  { slug: 'ciberseguridad', label: 'Ciberseguridad', match: ['cybersecurity', 'ciberseguridad'] },
+  { slug: 'cybersecurity', label: 'Ciberseguridad', match: ['cybersecurity', 'ciberseguridad'] },
+  { slug: 'latest', label: 'Últimas Noticias', match: ['latest'] }
+];
 
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) {
@@ -38,17 +51,20 @@ function cleanTitle(title) {
     .trim();
 }
 
-// 1. Generate Category Pages (e.g. /categoria/ai/index.html)
-const topics = ['ai', 'hardware', 'software', 'gadgets', 'cybersecurity', 'latest'];
-
-topics.forEach(topic => {
-  const topicName = TOPIC_LABELS[topic] || 'Tecnología';
-  const topicArticles = articles.filter(a => (a.topic || 'latest').toLowerCase() === topic || topic === 'latest');
+// 1. Generate Canonical Spanish Category Pages (e.g. /categoria/ia/index.html)
+TOPIC_CONFIG.forEach(topic => {
+  const topicName = topic.label;
+  const topicArticles = articles.filter(a => {
+    const t = (a.topic || 'latest').toLowerCase();
+    return topic.match.includes(t) || topic.slug === 'latest';
+  });
   const displayArticles = topicArticles.length ? topicArticles.slice(0, 30) : articles.slice(0, 30);
 
   const cardsHtml = displayArticles.map(art => {
     const rawTitle = cleanTitle(art.title);
     const cleanDesc = ((art.contentSnippet || "").replace(/<[^>]*>/g, '').replace(/"/g, '&quot;')).slice(0, 160);
+    const pubDateFormatted = art.pubDate ? new Date(art.pubDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Septiembre de 2026';
+
     return `
       <article style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between;">
         <div>
@@ -61,7 +77,7 @@ topics.forEach(topic => {
         </div>
         <div style="font-size: 12px; color: #94a3b8; font-weight: 500; border-top: 1px solid #f1f5f9; padding-top: 12px; display: flex; justify-content: space-between;">
           <span>${art.creator || 'Redacción InnovaTech'}</span>
-          <a href="/articulo/${encodeURIComponent(art.id)}" style="color: #2563eb; font-weight: 700; text-decoration: none;">Leer completo →</a>
+          <span>${pubDateFormatted}</span>
         </div>
       </article>`;
   }).join("\n");
@@ -72,8 +88,8 @@ topics.forEach(topic => {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${topicName} - Noticias y Análisis | InnovaTech</title>
-    <meta name="description" content="Últimas noticias, novedades e informes especializados sobre ${topicName} en InnovaTech." />
-    <link rel="canonical" href="https://innovatech.fun/categoria/${topic}" />
+    <meta name="description" content="Últimas noticias, novedades e informes técnicos sobre ${topicName} en InnovaTech." />
+    <link rel="canonical" href="https://innovatech.fun/categoria/${topic.slug}" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="google-adsense-account" content="ca-pub-9020993400158462" />
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9020993400158462" crossorigin="anonymous"></script>
@@ -90,13 +106,14 @@ topics.forEach(topic => {
           </div>
           <nav style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; font-weight: 600;">
             <a href="/" style="color: #0f172a; text-decoration: none;">Inicio</a>
-            <a href="/categoria/ai" style="color: #2563eb; text-decoration: none;">IA</a>
+            <a href="/categoria/ia" style="color: #2563eb; text-decoration: none;">IA</a>
             <a href="/categoria/hardware" style="color: #2563eb; text-decoration: none;">Hardware</a>
             <a href="/categoria/software" style="color: #2563eb; text-decoration: none;">Software</a>
             <a href="/categoria/gadgets" style="color: #2563eb; text-decoration: none;">Gadgets</a>
-            <a href="/categoria/cybersecurity" style="color: #2563eb; text-decoration: none;">Ciberseguridad</a>
-            <a href="/acerca-de" style="color: #64748b; text-decoration: none;">Acerca de</a>
+            <a href="/categoria/ciberseguridad" style="color: #2563eb; text-decoration: none;">Ciberseguridad</a>
+            <a href="/acerca-de" style="color: #64748b; text-decoration: none;">Quiénes Somos</a>
             <a href="/contacto" style="color: #64748b; text-decoration: none;">Contacto</a>
+            <a href="/privacidad" style="color: #64748b; text-decoration: none;">Privacidad</a>
           </nav>
         </div>
       </header>
@@ -115,8 +132,9 @@ topics.forEach(topic => {
 
       <footer style="background: #ffffff; border-top: 1px solid #e2e8f0; padding: 32px 20px; margin-top: 48px; text-align: center; font-size: 13px; color: #64748b;">
         <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-          <span>© 2026 InnovaTech. Todos los derechos reservados.</span>
+          <span>© 2026 InnovaTech Digital Media. Todos los derechos reservados.</span>
           <div style="display: flex; gap: 16px;">
+            <a href="/acerca-de" style="color: #2563eb; text-decoration: none;">Quiénes Somos</a>
             <a href="/privacidad" style="color: #2563eb; text-decoration: none;">Privacidad</a>
             <a href="/terminos" style="color: #2563eb; text-decoration: none;">Términos</a>
             <a href="/contacto" style="color: #2563eb; text-decoration: none;">Contacto</a>
@@ -128,22 +146,18 @@ topics.forEach(topic => {
 </html>`;
 
   // Write to dist/categoria/[topic]/index.html
-  const catDir = path.join(distDir, 'categoria', topic);
+  const catDir = path.join(distDir, 'categoria', topic.slug);
   ensureDir(catDir);
   fs.writeFileSync(path.join(catDir, 'index.html'), html, 'utf-8');
-
-  // Also write to dist/category/[topic]/index.html
-  const catAltDir = path.join(distDir, 'category', topic);
-  ensureDir(catAltDir);
-  fs.writeFileSync(path.join(catAltDir, 'index.html'), html, 'utf-8');
 });
 
-// 2. Generate Articles Pages (e.g. /articulo/[id]/index.html)
+// 2. Generate Articles Pages (with full text embedded for Googlebot / AdSense crawler)
 let articleCount = 0;
 articles.forEach(article => {
   const rawTitle = cleanTitle(article.title);
   const cleanSnippet = ((article.contentSnippet || "").replace(/<[^>]*>/g, '').replace(/"/g, '&quot;')).slice(0, 160);
   const articleUrl = `https://innovatech.fun/articulo/${encodeURIComponent(article.id)}`;
+  const pubDateFormatted = article.pubDate ? new Date(article.pubDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Septiembre de 2026';
 
   const articleHtml = `<!doctype html>
 <html lang="es">
@@ -168,29 +182,40 @@ articles.forEach(article => {
     <header style="background: #ffffff; border-bottom: 1px solid #e2e8f0; padding: 16px 24px; position: sticky; top: 0; z-index: 40;">
       <div style="max-width: 900px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between;">
         <a href="/" style="text-decoration: none; color: #2563eb; font-size: 24px; font-weight: 900;">InnovaTech</a>
-        <a href="/" style="text-decoration: none; font-size: 13px; font-weight: 700; color: #2563eb;">← Volver al Inicio</a>
+        <a href="/" style="text-decoration: none; font-size: 13px; font-weight: 700; color: #2563eb;">← Volver a Portada</a>
       </div>
     </header>
     <main style="max-width: 800px; margin: 0 auto; padding: 40px 20px;">
-      <span style="font-size: 11px; font-weight: 800; color: #2563eb; text-transform: uppercase;">${TOPIC_LABELS[article.topic] || 'Tecnología'}</span>
+      <span style="font-size: 11px; font-weight: 800; color: #2563eb; text-transform: uppercase;">${article.categories?.[0] || 'Tecnología'}</span>
       <h1 style="font-size: 32px; font-weight: 900; line-height: 1.25; margin: 12px 0 16px 0; color: #0f172a;">${rawTitle}</h1>
       <div style="display: flex; gap: 16px; font-size: 13px; color: #64748b; margin-bottom: 24px; border-bottom: 1px solid #e2e8f0; padding-bottom: 16px;">
         <span>Por <strong>${article.creator || 'Redacción InnovaTech'}</strong></span>
         <span>•</span>
-        <time datetime="${article.pubDate}">${new Date(article.pubDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</time>
+        <time datetime="${article.pubDate}">${pubDateFormatted}</time>
       </div>
       ${article.imageUrl ? `<img src="${article.imageUrl}" alt="${rawTitle}" style="width: 100%; border-radius: 16px; margin-bottom: 32px; max-height: 480px; object-fit: cover;" />` : ''}
       <div style="font-size: 16px; line-height: 1.8; color: #334155;">
         ${article.content || `<p>${cleanSnippet}</p>`}
       </div>
       <div style="margin-top: 40px; padding: 24px; background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; text-align: center;">
-        <h3 style="font-size: 16px; font-weight: 800; margin: 0 0 8px 0;">¿Te gustó este artículo?</h3>
-        <p style="font-size: 13px; color: #64748b; margin: 0 0 16px 0;">Explora más análisis tecnológicos actualizados en nuestra portada.</p>
+        <h3 style="font-size: 16px; font-weight: 800; margin: 0 0 8px 0;">¿Te gustó este análisis?</h3>
+        <p style="font-size: 13px; color: #64748b; margin: 0 0 16px 0;">Explora más artículos y reportes actualizados en nuestra portada.</p>
         <a href="/" style="display: inline-block; background: #2563eb; color: #ffffff; font-weight: 700; font-size: 13px; padding: 10px 20px; border-radius: 8px; text-decoration: none;">Ver más noticias</a>
       </div>
     </main>
     <footer style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 24px; text-align: center; font-size: 13px; color: #64748b; margin-top: 60px;">
-      © 2026 InnovaTech. Todos los derechos reservados.
+      <div style="max-width: 800px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <span>© 2026 InnovaTech Digital Media.</span>
+        <div style="display: flex; gap: 12px;">
+          <a href="/acerca-de" style="color: #64748b; text-decoration: none;">Quiénes Somos</a>
+          <span>•</span>
+          <a href="/privacidad" style="color: #64748b; text-decoration: none;">Privacidad</a>
+          <span>•</span>
+          <a href="/terminos" style="color: #64748b; text-decoration: none;">Términos</a>
+          <span>•</span>
+          <a href="/contacto" style="color: #64748b; text-decoration: none;">Contacto</a>
+        </div>
+      </div>
     </footer>
   </body>
 </html>`;
@@ -201,34 +226,28 @@ articles.forEach(article => {
   articleCount++;
 });
 
-// 3. Ensure static legal and info pages are also placed in dist/
-const staticPages = [
-  { src: path.join(__dirname, '..', 'public', 'privacy.html'), paths: ['privacidad/index.html', 'privacy/index.html', 'privacy.html', 'privacidad.html'] },
-  { src: path.join(__dirname, '..', 'public', 'terminos.html'), paths: ['terminos/index.html', 'terms/index.html', 'terminos.html', 'terms.html'] },
-  { src: path.join(__dirname, '..', 'public', 'acerca-de.html'), paths: ['acerca-de/index.html', 'about/index.html', 'acerca-de.html', 'about.html'] },
-  { src: path.join(__dirname, '..', 'public', 'contacto.html'), paths: ['contacto/index.html', 'contact/index.html', 'contacto.html', 'contact.html'] },
+// 3. Ensure static Spanish canonical pages are placed in dist/
+const canonicalPages = [
+  { src: path.join(__dirname, '..', 'public', 'privacidad', 'index.html'), dest: 'privacidad/index.html' },
+  { src: path.join(__dirname, '..', 'public', 'terminos', 'index.html'), dest: 'terminos/index.html' },
+  { src: path.join(__dirname, '..', 'public', 'acerca-de', 'index.html'), dest: 'acerca-de/index.html' },
+  { src: path.join(__dirname, '..', 'public', 'contacto', 'index.html'), dest: 'contacto/index.html' },
 ];
 
-staticPages.forEach(({ src, paths: destPaths }) => {
+canonicalPages.forEach(({ src, dest }) => {
   if (fs.existsSync(src)) {
-    const content = fs.readFileSync(src, 'utf-8');
-    destPaths.forEach(dest => {
-      const fullDest = path.join(distDir, dest);
-      ensureDir(path.dirname(fullDest));
-      fs.writeFileSync(fullDest, content, 'utf-8');
-    });
+    const fullDest = path.join(distDir, dest);
+    ensureDir(path.dirname(fullDest));
+    fs.writeFileSync(fullDest, fs.readFileSync(src, 'utf-8'), 'utf-8');
   }
 });
 
-// Ensure ads.txt and robots.txt in dist/
-const adsSrc = path.join(__dirname, '..', 'public', 'ads.txt');
-if (fs.existsSync(adsSrc)) {
-  fs.writeFileSync(path.join(distDir, 'ads.txt'), fs.readFileSync(adsSrc, 'utf-8'), 'utf-8');
-}
-const robotsSrc = path.join(__dirname, '..', 'public', 'robots.txt');
-if (fs.existsSync(robotsSrc)) {
-  fs.writeFileSync(path.join(distDir, 'robots.txt'), fs.readFileSync(robotsSrc, 'utf-8'), 'utf-8');
-}
+// Copy sitemap.xml, robots.txt, and ads.txt
+['sitemap.xml', 'robots.txt', 'ads.txt'].forEach(file => {
+  const src = path.join(__dirname, '..', 'public', file);
+  if (fs.existsSync(src)) {
+    fs.writeFileSync(path.join(distDir, file), fs.readFileSync(src, 'utf-8'), 'utf-8');
+  }
+});
 
-console.log(`[SSG Prerender] Pre-rendered ${topics.length} category pages, ${articleCount} article pages, and all static legal/E-E-A-T pages into dist/ successfully.`);
-
+console.log(`[SSG Prerender] Pre-rendered ${TOPIC_CONFIG.length} Spanish category pages, ${articleCount} full-text article pages, and all canonical legal/E-E-A-T pages into dist/ successfully.`);

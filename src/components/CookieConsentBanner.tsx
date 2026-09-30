@@ -77,6 +77,9 @@ export function CookieConsentBanner({ onOpenPrivacy }: CookieConsentBannerProps)
       delete ((window as any).adsbygoogle || {}).requestNonPersonalizedAds;
     }
 
+    // Notify all active ad components and listeners
+    window.dispatchEvent(new CustomEvent("cookie-consent-updated", { detail: prefs }));
+
     setIsVisible(false);
     setIsConfiguring(false);
   };
