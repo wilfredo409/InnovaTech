@@ -15,6 +15,7 @@ import {
   ensureUniqueArticlesImages,
   getImageCanonicalKey
 } from './uniqueImages';
+import { publishArticleToFacebook } from './facebookPublisher';
 
 let firestoreInstance: Firestore | null = null;
 
@@ -582,6 +583,14 @@ export function insertArticle(article: StoredArticle): boolean {
   syncArticleToFirestore(prepared).catch(err => {
     console.warn(`[InnovaTech DB] Background sync to Firestore skipped:`, err.message);
   });
+
+  // Automated Social Media Publishing: Facebook Page
+  if (process.env.FACEBOOK_PAGE_ACCESS_TOKEN && process.env.FACEBOOK_PAGE_ID) {
+    publishArticleToFacebook(prepared).catch(err => {
+      console.warn(`[InnovaTech Social] Facebook auto-publish skipped/failed:`, err.message || err);
+    });
+  }
+
   return true;
 }
 

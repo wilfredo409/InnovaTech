@@ -13,8 +13,19 @@ import {
   getSyncStatus
 } from "./server/articleManager";
 import { cleanArticleTitle, getUniqueImage, ensureUniqueArticlesImages } from "./server/uniqueImages";
+import { 
+  publishArticleToFacebook, 
+  verifyFacebookConnection, 
+  setRuntimeFacebookCredentials, 
+  getActiveFacebookCredentials,
+  startFacebookScheduler,
+  stopFacebookScheduler,
+  getFacebookSchedulerStatus,
+  getNextUnpublishedArticle,
+  loadPublishHistory
+} from "./server/facebookPublisher";
 
-dotenv.config();
+dotenv.config({ override: true });
 
 const app = express();
 const PORT = 3000;
@@ -1525,6 +1536,98 @@ app.post("/api/sync-news", async (req, res) => {
   }
 });
 
+// Automated Facebook Social Media Integration Routes
+app.get("/api/social/facebook/status", async (_req, res) => {
+  const { pageId, pageToken } = getActiveFacebookCredentials();
+  const status = await verifyFacebookConnection();
+  res.json({
+    ...status,
+    configured: {
+      hasPageId: Boolean(pageId),
+      pageId: pageId ? `${pageId.slice(0, 6)}...` : null,
+      hasToken: Boolean(pageToken),
+      tokenPrefix: pageToken ? `${pageToken.slice(0, 8)}...` : null
+    }
+  });
+});
+
+app.post("/api/social/facebook/test-connection", async (req, res) => {
+  const { pageId, pageToken, save } = req.body || {};
+  const status = await verifyFacebookConnection(pageId, pageToken);
+  if (status.valid && save && pageId && pageToken) {
+    setRuntimeFacebookCredentials(pageId, pageToken);
+  }
+  res.json(status);
+});
+
+app.post("/api/social/facebook/publish-latest", async (_req, res) => {
+  const articles = getAllArticles();
+  if (!articles.length) {
+    return res.status(404).json({ success: false, error: "No hay artículos disponibles para publicar." });
+  }
+  const result = await publishArticleToFacebook(articles[0]);
+  res.json(result);
+});
+
+app.post("/api/social/facebook/publish-next", async (_req, res) => {
+  const articles = getAllArticles();
+  const nextArticle = getNextUnpublishedArticle(articles);
+  if (!nextArticle) {
+    return res.status(404).json({ success: false, error: "No hay artículos pendientes en la cola." });
+  }
+  const result = await publishArticleToFacebook(nextArticle);
+  res.json({
+    success: result.success,
+    articleId: nextArticle.id,
+    articleTitle: nextArticle.title,
+    ...result
+  });
+});
+
+app.get("/api/social/facebook/scheduler/status", (_req, res) => {
+  const articles = getAllArticles();
+  const status = getFacebookSchedulerStatus(articles.length);
+  res.json(status);
+});
+
+app.post("/api/social/facebook/scheduler/start", (req, res) => {
+  const { intervalMinutes } = req.body || {};
+  const mins = typeof intervalMinutes === 'number' && intervalMinutes > 0 ? intervalMinutes : 30;
+  startFacebookScheduler(getAllArticles, mins);
+  const articles = getAllArticles();
+  res.json({
+    success: true,
+    message: `Programador iniciado: publicará cada ${mins} minutos con imagen y enlace en el primer comentario.`,
+    ...getFacebookSchedulerStatus(articles.length)
+  });
+});
+
+app.post("/api/social/facebook/scheduler/stop", (_req, res) => {
+  stopFacebookScheduler();
+  const articles = getAllArticles();
+  res.json({
+    success: true,
+    message: "Programador de Facebook detenido.",
+    ...getFacebookSchedulerStatus(articles.length)
+  });
+});
+
+app.get("/api/social/facebook/history", (_req, res) => {
+  const history = loadPublishHistory();
+  res.json({ history, count: history.length });
+});
+
+app.post("/api/social/facebook/publish/:id", async (req, res) => {
+  const { id } = req.params;
+  const articles = getAllArticles();
+  const article = articles.find(a => a.id === id);
+  if (!article) {
+    return res.status(404).json({ success: false, error: "Artículo no encontrado." });
+  }
+  const result = await publishArticleToFacebook(article);
+  res.json(result);
+});
+
 app.post("/api/translate", async (req, res) => {
   try {
     const { text, lang, isHtml } = req.body;
@@ -1622,12 +1725,20 @@ async function startServer() {
     });
   }, 3000);
 
-  // Set recurring 12-hour background check to ensure once-a-day ingestion
-  setInterval(() => {
-    runDailyEditorialIngest(getAI(), false).catch((err) => {
-      console.warn("Scheduled daily ingestion check:", err.message || err);
-    });
-  }, 12 * 60 * 60 * 1000);
+  // Automated 30-minute recurring Facebook publishing
+  setTimeout(async () => {
+    try {
+      const fbCheck = await verifyFacebookConnection();
+      if (fbCheck.valid) {
+        console.log("[InnovaTech Server] Credenciales de Facebook activas. Iniciando publicador autónomo cada 30 minutos...");
+        startFacebookScheduler(getAllArticles, 30);
+      } else {
+        console.warn("[InnovaTech Server] Facebook publisher en pausa: credenciales incompletas o no validadas.", fbCheck.error);
+      }
+    } catch (e: any) {
+      console.warn("[InnovaTech Server] Error verificando Facebook al arrancar:", e.message);
+    }
+  }, 2000);
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
