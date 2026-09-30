@@ -17,8 +17,14 @@ if (fs.existsSync(articlesFile)) {
   }
 }
 
-// Clean up any old duplicate English directories from dist/
-const legacyDirsToDelete = ['about', 'terms', 'contact', 'privacy', 'category'];
+// Clean up any old duplicate English directories or files from dist/
+const legacyDirsToDelete = [
+  'about', 'terms', 'contact', 'privacy', 'category',
+  path.join('categoria', 'ai'),
+  path.join('categoria', 'cybersecurity')
+];
+const legacyFilesToDelete = ['privacy.html', 'about.html', 'terms.html', 'contact.html'];
+
 legacyDirsToDelete.forEach(dirName => {
   const targetDir = path.join(distDir, dirName);
   if (fs.existsSync(targetDir)) {
@@ -28,14 +34,21 @@ legacyDirsToDelete.forEach(dirName => {
   }
 });
 
+legacyFilesToDelete.forEach(fileName => {
+  const targetFile = path.join(distDir, fileName);
+  if (fs.existsSync(targetFile)) {
+    try {
+      fs.rmSync(targetFile, { force: true });
+    } catch {}
+  }
+});
+
 const TOPIC_CONFIG = [
   { slug: 'ia', label: 'Inteligencia Artificial', match: ['ai', 'ia'] },
-  { slug: 'ai', label: 'Inteligencia Artificial', match: ['ai', 'ia'] },
   { slug: 'hardware', label: 'Hardware y Componentes', match: ['hardware'] },
   { slug: 'software', label: 'Software y Desarrollo', match: ['software'] },
   { slug: 'gadgets', label: 'Smartphones y Gadgets', match: ['gadgets'] },
   { slug: 'ciberseguridad', label: 'Ciberseguridad', match: ['cybersecurity', 'ciberseguridad'] },
-  { slug: 'cybersecurity', label: 'Ciberseguridad', match: ['cybersecurity', 'ciberseguridad'] },
   { slug: 'latest', label: 'Últimas Noticias', match: ['latest'] }
 ];
 
@@ -242,8 +255,8 @@ canonicalPages.forEach(({ src, dest }) => {
   }
 });
 
-// Copy sitemap.xml, robots.txt, and ads.txt
-['sitemap.xml', 'robots.txt', 'ads.txt'].forEach(file => {
+// Copy sitemap.xml, robots.txt, ads.txt, _redirects, and canonical root HTMLs
+['sitemap.xml', 'robots.txt', 'ads.txt', '_redirects', 'privacidad.html', 'terminos.html', 'acerca-de.html', 'contacto.html'].forEach(file => {
   const src = path.join(__dirname, '..', 'public', file);
   if (fs.existsSync(src)) {
     fs.writeFileSync(path.join(distDir, file), fs.readFileSync(src, 'utf-8'), 'utf-8');

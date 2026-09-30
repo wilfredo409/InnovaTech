@@ -513,11 +513,23 @@ export default function App() {
 
     if (isCategoryUrl) {
       const parts = path.split('/');
-      const cat = parts[2] || 'latest';
+      let cat = parts[2] || 'latest';
+      if (cat === 'ia') cat = 'ai';
+      if (cat === 'ciberseguridad') cat = 'cybersecurity';
       const knownTopics = ['latest', 'ai', 'hardware', 'software', 'gadgets', 'cybersecurity', 'podcasts', 'videos', 'events', 'reviews'];
       if (knownTopics.includes(cat)) {
         setActiveTopic(cat);
       }
+    }
+
+    if (path === '/privacy' || path === '/privacy.html' || path === '/privacy-policy.html') {
+      window.history.replaceState({}, '', '/privacidad');
+    } else if (path === '/about' || path === '/about.html') {
+      window.history.replaceState({}, '', '/acerca-de');
+    } else if (path === '/terms' || path === '/terms.html') {
+      window.history.replaceState({}, '', '/terminos');
+    } else if (path === '/contact' || path === '/contact.html') {
+      window.history.replaceState({}, '', '/contacto');
     }
 
     if (isPrivacyUrl) setShowPrivacyModal(true);

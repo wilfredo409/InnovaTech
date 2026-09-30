@@ -57,6 +57,73 @@ app.use((req, res, next) => {
   next();
 });
 
+// 301 Permanent Redirects for legacy and duplicate English URLs to Canonical Spanish URLs
+app.use((req, res, next) => {
+  const urlPath = req.path.toLowerCase();
+
+  // Privacy redirects (301)
+  if (
+    urlPath === '/privacy' ||
+    urlPath === '/privacy/' ||
+    urlPath === '/privacy.html' ||
+    urlPath === '/privacy-policy' ||
+    urlPath === '/privacy-policy.html'
+  ) {
+    return res.redirect(301, '/privacidad');
+  }
+
+  // About redirects (301)
+  if (
+    urlPath === '/about' ||
+    urlPath === '/about/' ||
+    urlPath === '/about.html' ||
+    urlPath === '/about-us' ||
+    urlPath === '/about-us.html'
+  ) {
+    return res.redirect(301, '/acerca-de');
+  }
+
+  // Terms redirects (301)
+  if (
+    urlPath === '/terms' ||
+    urlPath === '/terms/' ||
+    urlPath === '/terms.html' ||
+    urlPath === '/terms-and-conditions' ||
+    urlPath === '/terms-and-conditions.html'
+  ) {
+    return res.redirect(301, '/terminos');
+  }
+
+  // Contact redirects (301)
+  if (
+    urlPath === '/contact' ||
+    urlPath === '/contact/' ||
+    urlPath === '/contact.html' ||
+    urlPath === '/contact-us' ||
+    urlPath === '/contact-us.html'
+  ) {
+    return res.redirect(301, '/contacto');
+  }
+
+  // English Category Slugs to Canonical Spanish Category Slugs (301)
+  if (urlPath === '/categoria/ai' || urlPath === '/categoria/ai/' || urlPath === '/category/ai' || urlPath === '/category/ai/') {
+    return res.redirect(301, '/categoria/ia');
+  }
+
+  if (urlPath === '/categoria/cybersecurity' || urlPath === '/categoria/cybersecurity/' || urlPath === '/category/cybersecurity' || urlPath === '/category/cybersecurity/') {
+    return res.redirect(301, '/categoria/ciberseguridad');
+  }
+
+  if (urlPath.startsWith('/category/')) {
+    const slug = urlPath.replace('/category/', '').replace(/\/$/, '');
+    if (slug === 'ai') return res.redirect(301, '/categoria/ia');
+    if (slug === 'cybersecurity') return res.redirect(301, '/categoria/ciberseguridad');
+    return res.redirect(301, `/categoria/${slug}`);
+  }
+
+  next();
+});
+
 // Explicit ads.txt & app-ads.txt routes for Google AdSense & AdMob crawler verification
 app.get(["/ads.txt", "/app-ads.txt"], (_req, res) => {
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
@@ -316,9 +383,9 @@ app.get(["/categoria/:topic", "/category/:topic", "/noticias/:topic", "/tema/:to
         <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
           <span>© 2026 InnovaTech. Todos los derechos reservados.</span>
           <div style="display: flex; gap: 16px;">
-            <a href="/privacy.html" style="color: #2563eb; text-decoration: none;">Privacidad</a>
-            <a href="/terminos.html" style="color: #2563eb; text-decoration: none;">Términos</a>
-            <a href="/contacto.html" style="color: #2563eb; text-decoration: none;">Contacto</a>
+            <a href="/privacidad" style="color: #2563eb; text-decoration: none;">Privacidad</a>
+            <a href="/terminos" style="color: #2563eb; text-decoration: none;">Términos</a>
+            <a href="/contacto" style="color: #2563eb; text-decoration: none;">Contacto</a>
           </div>
         </div>
       </footer>
@@ -528,24 +595,24 @@ app.get(["/articulo/:id", "/article/:id", "/noticia/:id", "/news/:id"], (req, re
 });
 
 // Explicit routes for all legal & contact pages (both clean URLs and .html extensions)
-app.get(["/privacy", "/privacy.html", "/privacidad", "/privacy-policy.html"], (_req, res) => {
+app.get(["/privacidad", "/privacidad.html"], (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
-  res.sendFile(path.join(process.cwd(), "public", "privacy.html"));
+  res.sendFile(path.join(process.cwd(), "public", "privacidad", "index.html"));
 });
 
-app.get(["/terminos", "/terminos.html", "/terms", "/terms.html"], (_req, res) => {
+app.get(["/terminos", "/terminos.html"], (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
-  res.sendFile(path.join(process.cwd(), "public", "terminos.html"));
+  res.sendFile(path.join(process.cwd(), "public", "terminos", "index.html"));
 });
 
-app.get(["/acerca-de", "/acerca-de.html", "/about", "/about.html"], (_req, res) => {
+app.get(["/acerca-de", "/acerca-de.html"], (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
-  res.sendFile(path.join(process.cwd(), "public", "acerca-de.html"));
+  res.sendFile(path.join(process.cwd(), "public", "acerca-de", "index.html"));
 });
 
-app.get(["/contacto", "/contacto.html", "/contact", "/contact.html"], (_req, res) => {
+app.get(["/contacto", "/contacto.html"], (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
-  res.sendFile(path.join(process.cwd(), "public", "contacto.html"));
+  res.sendFile(path.join(process.cwd(), "public", "contacto", "index.html"));
 });
 
 
@@ -1456,302 +1523,6 @@ app.post("/api/sync-news", async (req, res) => {
     console.error("Sync news error:", err);
     res.status(500).json({ success: false, error: err.message || err });
   }
-});
-
-// Dedicated routes to serve the Privacy Policy directly as a beautiful standalone page (prevents 404s and fully complies with Google Play Store requirements)
-app.get(["/privacy", "/privacy.html"], (req, res) => {
-  res.send(`
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Política de Privacidad - InnovaTech Noticias</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Inter', sans-serif; }
-  </style>
-  <script>
-    function toggleLanguage(lang) {
-      if (lang === 'es') {
-        document.getElementById('content-es').classList.remove('hidden');
-        document.getElementById('content-en').classList.add('hidden');
-        document.getElementById('btn-es').classList.add('bg-blue-600', 'text-white');
-        document.getElementById('btn-es').classList.remove('bg-gray-200', 'text-gray-700', 'dark:bg-gray-800', 'dark:text-gray-300');
-        document.getElementById('btn-en').classList.add('bg-gray-200', 'text-gray-700', 'dark:bg-gray-800', 'dark:text-gray-300');
-        document.getElementById('btn-en').classList.remove('bg-blue-600', 'text-white');
-      } else {
-        document.getElementById('content-es').classList.add('hidden');
-        document.getElementById('content-en').classList.remove('hidden');
-        document.getElementById('btn-en').classList.add('bg-blue-600', 'text-white');
-        document.getElementById('btn-en').classList.remove('bg-gray-200', 'text-gray-700', 'dark:bg-gray-800', 'dark:text-gray-300');
-        document.getElementById('btn-es').classList.add('bg-gray-200', 'text-gray-700', 'dark:bg-gray-800', 'dark:text-gray-300');
-        document.getElementById('btn-es').classList.remove('bg-blue-600', 'text-white');
-      }
-    }
-  </script>
-</head>
-<body class="bg-slate-50 text-slate-900 transition-colors duration-200 min-h-screen">
-  <div class="max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-    <!-- Header Card -->
-    <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 mb-8 flex flex-col sm:flex-row items-center justify-between gap-6">
-      <div class="flex items-center gap-4">
-        <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-xl shadow-sm">
-          iT
-        </div>
-        <div>
-          <h1 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">InnovaTech Noticias</h1>
-          <p class="text-xs text-slate-500 font-medium">Identificador: <span class="font-bold text-slate-700">com.mobilezonne.innovatech</span></p>
-        </div>
-      </div>
-      
-      <!-- Language Selector -->
-      <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200/50">
-        <button id="btn-es" onclick="toggleLanguage('es')" class="px-4 py-2 text-xs font-bold rounded-lg transition-all bg-blue-600 text-white shadow-sm">Español</button>
-        <button id="btn-en" onclick="toggleLanguage('en')" class="px-4 py-2 text-xs font-bold rounded-lg transition-all text-slate-700 hover:text-slate-950">English</button>
-      </div>
-    </div>
-
-    <!-- SPANISH CONTENT -->
-    <main id="content-es" class="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-100 space-y-8">
-      <div>
-        <h2 class="text-2xl font-black text-slate-950 tracking-tight border-b pb-4 border-slate-100">Política de Privacidad</h2>
-        <p class="text-xs text-slate-400 mt-2 font-medium">Última actualización: Julio 2026</p>
-      </div>
-
-      <div class="space-y-4">
-        <p class="text-sm text-slate-600 leading-relaxed font-medium">
-          En <strong>InnovaTech Noticias</strong> ("nosotros", "nuestro"), valoramos profundamente tu privacidad y la seguridad de tus datos. Esta Política de Privacidad explica de manera transparente cómo recopilamos, utilizamos, almacenamos y protegemos tu información cuando utilizas nuestra aplicación móvil <strong>InnovaTech (com.mobilezonne.innovatech)</strong>.
-        </p>
-        <p class="text-sm text-slate-600 leading-relaxed font-medium">
-          Nuestra aplicación ofrece servicios interactivos de noticias tecnológicas, videos y podcasts. Al utilizar nuestra App, aceptas las prácticas descritas en este documento. Cumplimos estrictamente con las directrices para desarrolladores de Google Play y las normativas de protección de datos aplicables.
-        </p>
-      </div>
-
-      <!-- Section 1 -->
-      <section class="space-y-3">
-        <h3 class="text-base font-extrabold text-slate-950 flex items-center gap-2">
-          <span class="w-1.5 h-6 bg-blue-600 rounded-full"></span>
-          1. Información que Recopilamos
-        </h3>
-        <div class="pl-3.5 space-y-2 text-sm text-slate-600 leading-relaxed font-medium">
-          <p><strong>Información de Cuenta (Google Sign-In):</strong> Si decides registrarte e iniciar sesión con tu cuenta de Google, recopilamos de manera segura tu nombre, dirección de correo electrónico y URL de imagen de perfil. Esto es necesario para personalizar tu perfil, habilitar los comentarios de la comunidad y sincronizar tus datos en la nube.</p>
-          <p><strong>Datos de Uso e Historial:</strong> Para mejorar tu experiencia de lectura y ofrecerte mejores recomendaciones de noticias, registramos de forma local (y en la nube si estás autenticado) el historial de noticias leídas, videos vistos y episodios de podcasts reproducidos.</p>
-          <p><strong>Contenido Generado por el Usuario:</strong> Almacenamos de forma segura en nuestra base de datos los comentarios y respuestas que publicas en los artículos, vinculados de forma transparente a tu perfil de usuario.</p>
-          <p><strong>Datos de Dispositivo y Anuncios (Google AdMob):</strong> La aplicación utiliza Google AdMob para mostrar publicidad. AdMob puede recopilar el ID de publicidad de Android (Advertising ID), dirección IP, identificadores de dispositivo y datos de rendimiento de red para ofrecer anuncios personalizados o generales de acuerdo con las normativas de consentimiento de Google.</p>
-        </div>
-      </section>
-
-      <!-- Section 2 -->
-      <section class="space-y-3">
-        <h3 class="text-base font-extrabold text-slate-950 flex items-center gap-2">
-          <span class="w-1.5 h-6 bg-blue-600 rounded-full"></span>
-          2. Cómo Utilizábamos tus Datos
-        </h3>
-        <ul class="pl-7 list-disc space-y-2 text-sm text-slate-600 leading-relaxed font-medium">
-          <li>Para proporcionar, mantener y mejorar los servicios interactivos de InnovaTech Noticias.</li>
-          <li>Sincronizar tus preferencias de idioma, temas favoritos, historial de lectura y comentarios entre múltiples dispositivos mediante Firebase Firestore de manera segura.</li>
-          <li>Gestionar y moderar las interacciones de la comunidad (comentarios y respuestas).</li>
-          <li>Mostrar anuncios adaptados o generales a través de Google AdMob, respetando tus configuraciones de personalización.</li>
-          <li>Enviar notificaciones automáticas relevantes sobre respuestas a tus comentarios o noticias urgentes.</li>
-        </ul>
-      </section>
-
-      <!-- Section 3 -->
-      <section class="space-y-3">
-        <h3 class="text-base font-extrabold text-slate-950 flex items-center gap-2">
-          <span class="w-1.5 h-6 bg-blue-600 rounded-full"></span>
-          3. Servicios de Terceros
-        </h3>
-        <div class="pl-3.5 space-y-2 text-sm text-slate-600 leading-relaxed font-medium">
-          <p>Para garantizar un servicio seguro y estable, integramos los siguientes servicios de confianza de Google:</p>
-          <ul class="list-disc pl-5 space-y-1">
-            <li><strong>Firebase (Google LLC):</strong> Utilizado para la autenticación de usuarios de forma segura y el almacenamiento de bases de datos de Firestore cifradas.</li>
-            <li><strong>Google AdMob (Google LLC):</strong> Integrado para mostrar anuncios publicitarios respetando las políticas de publicidad.</li>
-            <li><strong>YouTube API Services:</strong> Para reproducir videos informativos y tutoriales integrados en el feed de noticias.</li>
-          </ul>
-        </div>
-      </section>
-
-      <!-- Section 4 -->
-      <section class="space-y-3 bg-red-50/30 border border-red-100 p-5 rounded-2xl">
-        <h3 class="text-base font-extrabold text-red-950 flex items-center gap-2">
-          <span class="w-1.5 h-6 bg-red-600 rounded-full"></span>
-          4. Requisito de Eliminación de Cuentas y Datos (Google Play Compliance)
-        </h3>
-        <div class="pl-3.5 space-y-3 text-sm text-slate-700 leading-relaxed font-semibold">
-          <p>
-            En total conformidad con los estrictos requisitos de datos de usuario de <strong>Google Play</strong>, proporcionamos un método claro y accesible para que los usuarios soliciten y ejecuten la eliminación completa de su cuenta y todos los datos asociados de forma inmediata.
-          </p>
-          <p>
-            <strong>Cómo eliminar tu cuenta y datos desde la App:</strong>
-          </p>
-          <ol class="list-decimal pl-5 space-y-1 text-slate-600 font-medium">
-            <li>Abre la aplicación móvil <strong>InnovaTech</strong>.</li>
-            <li>Abre el Menú lateral deslizante en la esquina izquierda.</li>
-            <li>Haz clic en el botón con texto rojo <strong>"Eliminar Cuenta y Datos"</strong>.</li>
-            <li>Confirma tu decisión en la ventana emergente.</li>
-          </ol>
-          <p class="font-bold text-red-700">
-            Consecuencias de la eliminación: Al confirmar, tu perfil de usuario, historial de lectura, preferencias, marcadores y todos tus comentarios y respuestas serán eliminados permanentemente de nuestros servidores en la nube de forma irreversible e inmediata.
-          </p>
-          <p class="text-xs font-medium text-slate-500">
-            También puedes solicitar la eliminación enviando un correo electrónico directamente a nuestro soporte de privacidad en <a href="mailto:privacidad@innovatech.fun" class="text-blue-600 underline">privacidad@innovatech.fun</a>. Procesaremos y eliminaremos tus datos en un plazo máximo de 24 horas.
-          </p>
-        </div>
-      </section>
-
-      <!-- Section 5 -->
-      <section class="space-y-3">
-        <h3 class="text-base font-extrabold text-slate-950 flex items-center gap-2">
-          <span class="w-1.5 h-6 bg-blue-600 rounded-full"></span>
-          5. Privacidad Infantil
-        </h3>
-        <p class="pl-3.5 text-sm text-slate-600 leading-relaxed font-medium">
-          Nuestra aplicación está dirigida a un público general interesado en tecnología. No recopilamos conscientemente ninguna información de identificación personal de niños menores de 13 años. Si detectamos que un menor de 13 años nos ha proporcionado datos personales, procederemos a eliminarlos de forma inmediata de nuestros servidores.
-        </p>
-      </section>
-
-      <!-- Section 6 -->
-      <section class="space-y-3">
-        <h3 class="text-base font-extrabold text-slate-950 flex items-center gap-2">
-          <span class="w-1.5 h-6 bg-blue-600 rounded-full"></span>
-          6. Contacto y Soporte
-        </h3>
-        <p class="pl-3.5 text-sm text-slate-600 leading-relaxed font-medium">
-          Si tienes cualquier pregunta, inquietud o reclamación relacionada con esta Política de Privacidad o la gestión de tus datos personales, puedes ponerte en contacto con nuestro oficial de privacidad en cualquier momento:
-          <br>
-          <span class="block mt-2 font-bold text-slate-900">Correo Electrónico: <a href="mailto:privacidad@innovatech.fun" class="text-blue-600 hover:underline">privacidad@innovatech.fun</a></span>
-        </p>
-      </section>
-
-      <div class="border-t pt-6 text-center text-xs text-slate-400 font-bold">
-        © 2026 InnovaTech Noticias. Todos los derechos reservados.
-      </div>
-    </main>
-
-    <!-- ENGLISH CONTENT -->
-    <main id="content-en" class="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-100 space-y-8 hidden">
-      <div>
-        <h2 class="text-2xl font-black text-slate-950 tracking-tight border-b pb-4 border-slate-100">Privacy Policy</h2>
-        <p class="text-xs text-slate-400 mt-2 font-medium">Last updated: July 2026</p>
-      </div>
-
-      <div class="space-y-4">
-        <p class="text-sm text-slate-600 leading-relaxed font-medium">
-          At <strong>InnovaTech News</strong> ("we", "our"), we deeply value your privacy and data security. This Privacy Policy outlines how we collect, use, store, and protect your information when you use our mobile application <strong>InnovaTech (com.mobilezonne.innovatech)</strong>.
-        </p>
-        <p class="text-sm text-slate-600 leading-relaxed font-medium">
-          Our application provides technology news, video summaries, and podcasts. By using our App, you consent to the practices described here. We strictly comply with Google Play Developer Policies and applicable data protection regulations.
-        </p>
-      </div>
-
-      <!-- Section 1 -->
-      <section class="space-y-3">
-        <h3 class="text-base font-extrabold text-slate-950 flex items-center gap-2">
-          <span class="w-1.5 h-6 bg-blue-600 rounded-full"></span>
-          1. Information We Collect
-        </h3>
-        <div class="pl-3.5 space-y-2 text-sm text-slate-600 leading-relaxed font-medium">
-          <p><strong>Account Information (Google Sign-In):</strong> If you choose to register and sign in with your Google account, we securely collect your name, email address, and profile picture URL to personalize your profile, enable interactive comments, and sync your data securely across multiple devices.</p>
-          <p><strong>Usage Data and History:</strong> To improve your reading feed, we log your read news, watched videos, and played podcasts locally (and in the cloud if authenticated).</p>
-          <p><strong>User-Generated Content:</strong> We store comments and replies you write on articles, linked transparently to your user profile.</p>
-          <p><strong>Device and Advertisement Data (Google AdMob):</strong> The App utilizes Google AdMob to display advertisements. AdMob may collect Android Advertising IDs, IP addresses, device identifiers, and network performance data in line with Google's consent guidelines.</p>
-        </div>
-      </section>
-
-      <!-- Section 2 -->
-      <section class="space-y-3">
-        <h3 class="text-base font-extrabold text-slate-950 flex items-center gap-2">
-          <span class="w-1.5 h-6 bg-blue-600 rounded-full"></span>
-          2. How We Use Your Data
-        </h3>
-        <ul class="pl-7 list-disc space-y-2 text-sm text-slate-600 leading-relaxed font-medium">
-          <li>To provide, maintain, and improve InnovaTech's interactive services.</li>
-          <li>To safely sync your language, topic preferences, reading history, and comments across devices using Firebase Firestore.</li>
-          <li>To manage and moderate community discussions (comments and replies).</li>
-          <li>To display tailored or general advertisements via Google AdMob.</li>
-          <li>To send relevant push notifications regarding replies to your comments or breaking tech news.</li>
-        </ul>
-      </section>
-
-      <!-- Section 3 -->
-      <section class="space-y-3">
-        <h3 class="text-base font-extrabold text-slate-950 flex items-center gap-2">
-          <span class="w-1.5 h-6 bg-blue-600 rounded-full"></span>
-          3. Third-Party Services
-        </h3>
-        <div class="pl-3.5 space-y-2 text-sm text-slate-600 leading-relaxed font-medium">
-          <p>To ensure secure and reliable operations, we integrate the following trusted Google services:</p>
-          <ul class="list-disc pl-5 space-y-1">
-            <li><strong>Firebase (Google LLC):</strong> Used for secure user authentication and Firestore database storage.</li>
-            <li><strong>Google AdMob (Google LLC):</strong> Used to monetize our app through banner advertisements complying with Google's advertising guidelines.</li>
-            <li><strong>YouTube API Services:</strong> Embedded to play technical video content directly within the articles.</li>
-          </ul>
-        </div>
-      </section>
-
-      <!-- Section 4 -->
-      <section class="space-y-3 bg-red-50/30 border border-red-100 p-5 rounded-2xl">
-        <h3 class="text-base font-extrabold text-red-950 flex items-center gap-2">
-          <span class="w-1.5 h-6 bg-red-600 rounded-full"></span>
-          4. Account and Data Deletion Requirement (Google Play Compliance)
-        </h3>
-        <div class="pl-3.5 space-y-3 text-sm text-slate-700 leading-relaxed font-semibold">
-          <p>
-            In full compliance with <strong>Google Play's User Data policy</strong>, we provide a prominent and accessible in-app mechanism for users to request and execute the permanent deletion of their account and all associated user data.
-          </p>
-          <p>
-            <strong>How to delete your account and data:</strong>
-          </p>
-          <ol class="list-decimal pl-5 space-y-1 text-slate-600 font-medium">
-            <li>Open the <strong>InnovaTech</strong> app on your device.</li>
-            <li>Open the side drawer Menu on the left.</li>
-            <li>Click the red <strong>"Eliminar Cuenta y Datos"</strong> (Delete Account & Data) button.</li>
-            <li>Confirm your request in the dialog box.</li>
-          </ol>
-          <p class="font-bold text-red-700">
-            Consequences of deletion: Upon confirmation, your user profile, reading history, preferences, bookmarks, and all comments/replies will be immediately and permanently purged from our Firebase servers.
-          </p>
-          <p class="text-xs font-medium text-slate-500">
-            You can also submit a data deletion request by emailing us directly at <a href="mailto:privacidad@innovatech.fun" class="text-blue-600 underline">privacidad@innovatech.fun</a>. We will process and delete your data within 24 hours.
-          </p>
-        </div>
-      </section>
-
-      <!-- Section 5 -->
-      <section class="space-y-3">
-        <h3 class="text-base font-extrabold text-slate-950 flex items-center gap-2">
-          <span class="w-1.5 h-6 bg-blue-600 rounded-full"></span>
-          5. Children's Privacy
-        </h3>
-        <p class="pl-3.5 text-sm text-slate-600 leading-relaxed font-medium">
-          InnovaTech News is designed for a general audience. We do not knowingly collect personal data from children under the age of 13. If we discover a child under 13 has provided personal information, we will immediately delete it from our systems.
-        </p>
-      </section>
-
-      <!-- Section 6 -->
-      <section class="space-y-3">
-        <h3 class="text-base font-extrabold text-slate-950 flex items-center gap-2">
-          <span class="w-1.5 h-6 bg-blue-600 rounded-full"></span>
-          6. Contact Us
-        </h3>
-        <p class="pl-3.5 text-sm text-slate-600 leading-relaxed font-medium">
-          If you have any questions, concerns, or requests regarding this Privacy Policy or your data rights, please contact us at:
-          <br>
-          <span class="block mt-2 font-bold text-slate-900">Email: <a href="mailto:privacidad@innovatech.fun" class="text-blue-600 hover:underline">privacidad@innovatech.fun</a></span>
-        </p>
-      </section>
-
-      <div class="border-t pt-6 text-center text-xs text-slate-400 font-bold">
-        © 2026 InnovaTech News. All rights reserved.
-      </div>
-    </main>
-  </div>
-</body>
-</html>
-  `);
 });
 
 app.post("/api/translate", async (req, res) => {

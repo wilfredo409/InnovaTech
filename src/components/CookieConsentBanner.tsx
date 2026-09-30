@@ -77,6 +77,17 @@ export function CookieConsentBanner({ onOpenPrivacy }: CookieConsentBannerProps)
       delete ((window as any).adsbygoogle || {}).requestNonPersonalizedAds;
     }
 
+    // Google Consent Mode v2 native update
+    if (typeof (window as any).gtag === "function") {
+      (window as any).gtag("consent", "update", {
+        ad_storage: marketing ? "granted" : "denied",
+        ad_user_data: marketing ? "granted" : "denied",
+        ad_personalization: marketing ? "granted" : "denied",
+        analytics_storage: analytics ? "granted" : "denied",
+        personalization_storage: marketing ? "granted" : "denied"
+      });
+    }
+
     // Notify all active ad components and listeners
     window.dispatchEvent(new CustomEvent("cookie-consent-updated", { detail: prefs }));
 
