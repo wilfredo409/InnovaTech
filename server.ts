@@ -1615,7 +1615,7 @@ app.get(["/privacy", "/privacy.html"], (req, res) => {
             Consecuencias de la eliminación: Al confirmar, tu perfil de usuario, historial de lectura, preferencias, marcadores y todos tus comentarios y respuestas serán eliminados permanentemente de nuestros servidores en la nube de forma irreversible e inmediata.
           </p>
           <p class="text-xs font-medium text-slate-500">
-            También puedes solicitar la eliminación enviando un correo electrónico directamente a nuestro soporte de privacidad en <a href="mailto:smiwceron@gmail.com" class="text-blue-600 underline">smiwceron@gmail.com</a>. Procesaremos y eliminaremos tus datos en un plazo máximo de 24 horas.
+            También puedes solicitar la eliminación enviando un correo electrónico directamente a nuestro soporte de privacidad en <a href="mailto:privacidad@innovatech.fun" class="text-blue-600 underline">privacidad@innovatech.fun</a>. Procesaremos y eliminaremos tus datos en un plazo máximo de 24 horas.
           </p>
         </div>
       </section>
@@ -1640,7 +1640,7 @@ app.get(["/privacy", "/privacy.html"], (req, res) => {
         <p class="pl-3.5 text-sm text-slate-600 leading-relaxed font-medium">
           Si tienes cualquier pregunta, inquietud o reclamación relacionada con esta Política de Privacidad o la gestión de tus datos personales, puedes ponerte en contacto con nuestro oficial de privacidad en cualquier momento:
           <br>
-          <span class="block mt-2 font-bold text-slate-900">Correo Electrónico: <a href="mailto:smiwceron@gmail.com" class="text-blue-600 hover:underline">smiwceron@gmail.com</a></span>
+          <span class="block mt-2 font-bold text-slate-900">Correo Electrónico: <a href="mailto:privacidad@innovatech.fun" class="text-blue-600 hover:underline">privacidad@innovatech.fun</a></span>
         </p>
       </section>
 
@@ -1733,7 +1733,7 @@ app.get(["/privacy", "/privacy.html"], (req, res) => {
             Consequences of deletion: Upon confirmation, your user profile, reading history, preferences, bookmarks, and all comments/replies will be immediately and permanently purged from our Firebase servers.
           </p>
           <p class="text-xs font-medium text-slate-500">
-            You can also submit a data deletion request by emailing us directly at <a href="mailto:smiwceron@gmail.com" class="text-blue-600 underline">smiwceron@gmail.com</a>. We will process and delete your data within 24 hours.
+            You can also submit a data deletion request by emailing us directly at <a href="mailto:privacidad@innovatech.fun" class="text-blue-600 underline">privacidad@innovatech.fun</a>. We will process and delete your data within 24 hours.
           </p>
         </div>
       </section>
@@ -1758,7 +1758,7 @@ app.get(["/privacy", "/privacy.html"], (req, res) => {
         <p class="pl-3.5 text-sm text-slate-600 leading-relaxed font-medium">
           If you have any questions, concerns, or requests regarding this Privacy Policy or your data rights, please contact us at:
           <br>
-          <span class="block mt-2 font-bold text-slate-900">Email: <a href="mailto:smiwceron@gmail.com" class="text-blue-600 hover:underline">smiwceron@gmail.com</a></span>
+          <span class="block mt-2 font-bold text-slate-900">Email: <a href="mailto:privacidad@innovatech.fun" class="text-blue-600 hover:underline">privacidad@innovatech.fun</a></span>
         </p>
       </section>
 

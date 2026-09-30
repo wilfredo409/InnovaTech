@@ -43,10 +43,11 @@ export function PrivacyPolicyModal({ isOpen, onClose, lang }: PrivacyPolicyModal
           title: "3. Uso de Cookies y Publicidad de Google AdSense",
           icon: HelpCircle,
           content: [
-            "Proveedores de Terceros: Proveedores externos, incluido Google, utilizan cookies para publicar anuncios basados en las visitas anteriores de los usuarios a nuestro sitio web o a otros sitios web de Internet.",
-            "Cookies Publicitarias de Google: El uso de cookies publicitarias (como la cookie de DoubleClick/DART) permite a Google y a sus socios comerciales mostrar anuncios relevantes a los usuarios en función de sus hábitos de navegación en este y otros sitios.",
-            "Inhabilitación de Anuncios Personalizados: Los usuarios pueden inhabilitar la publicidad personalizada en cualquier momento visitando la Configuración de Anuncios de Google (https://adssettings.google.com) o a través del portal de la Digital Advertising Alliance (www.aboutads.info/choices).",
-            "Cookies Propias y Analíticas: Utilizamos cookies técnicas estrictamente necesarias para el funcionamiento del sitio (gestión de tema claro/oscuro, idioma y sesión) y cookies analíticas para medir el tráfico agregado."
+            "Proveedores de Terceros: Proveedores externos, incluido Google LLC, utilizan cookies para publicar anuncios basados en las visitas anteriores de los usuarios a nuestro sitio web o a otros sitios web de Internet.",
+            "Cookies Publicitarias de Google: El uso de cookies publicitarias (como la cookie de DoubleClick / AdSense) permite a Google y a sus socios comerciales mostrar anuncios relevantes a los usuarios en función de sus visitas a este u otros sitios de la red global.",
+            "Inhabilitación de Anuncios Personalizados: Los usuarios pueden inhabilitar la publicidad personalizada en cualquier momento visitando el Centro de Control de Anuncios de Google (https://myadcenter.google.com y https://adssettings.google.com).",
+            "Exclusión en Plataformas Independientes: También puedes gestionar o inhabilitar cookies publicitarias de terceros a través de www.aboutads.info/choices (EE. UU.) o www.youronlinechoices.eu (Europa).",
+            "Cookies Propias y Analíticas: Utilizamos cookies técnicas estrictamente necesarias para el funcionamiento del sitio (gestión de tema claro/oscuro, idioma y sesión) y cookies analíticas para medir el tráfico agregado de forma anónima."
           ]
         },
         {
@@ -64,7 +65,7 @@ export function PrivacyPolicyModal({ isOpen, onClose, lang }: PrivacyPolicyModal
           content: [
             "Derechos ARCO / RGPD: Tienes derecho a acceder, rectificar, limitar, solicitar la portabilidad y exigir la eliminación definitiva de tus datos personales.",
             "Eliminación Directa e Inmediata: Puedes pulsar la opción 'Eliminar Cuenta y Datos' en el menú principal para borrar de manera permanente e irreversible todo tu perfil, comentarios e historial de nuestros servidores.",
-            "Solicitud Manual: También puedes escribirnos a smiwceron@gmail.com para solicitar la supresión de cualquier registro."
+            "Solicitud Manual: También puedes escribirnos a privacidad@innovatech.fun con copia a contacto@innovatech.fun para solicitar la supresión de cualquier registro."
           ]
         },
         {
@@ -78,7 +79,7 @@ export function PrivacyPolicyModal({ isOpen, onClose, lang }: PrivacyPolicyModal
           title: "7. Contacto y Consultas",
           icon: Mail,
           content: [
-            "Para cualquier consulta sobre nuestra Política de Privacidad, gestión de cookies o ejercicio de derechos legales, contáctanos en: smiwceron@gmail.com"
+            "Para cualquier consulta sobre nuestra Política de Privacidad, gestión de cookies o ejercicio de derechos legales, contáctanos en: privacidad@innovatech.fun"
           ]
         }
       ],
@@ -132,7 +133,7 @@ export function PrivacyPolicyModal({ isOpen, onClose, lang }: PrivacyPolicyModal
           icon: Trash2,
           content: [
             "Right to Delete Your Data (Account Deletion Compliance): In full compliance with Google Play User Data policies, we provide a prominent in-app option to permanently delete your account and associated records. You can execute this at any time in the app Menu by clicking 'Delete Account & Data'. Once confirmed, all your user profile data, reading history, comments, and replies will be permanently and irreversibly purged from our Firebase servers immediately.",
-            "Manual Request: You can also write to us at smiwceron@gmail.com to request manual deletion of any personal data linked to your account."
+            "Manual Request: You can also write to us at privacidad@innovatech.fun to request manual deletion of any personal data linked to your account."
           ]
         },
         {
@@ -146,7 +147,7 @@ export function PrivacyPolicyModal({ isOpen, onClose, lang }: PrivacyPolicyModal
           title: "7. Contact Us",
           icon: Mail,
           content: [
-            "If you have any questions, concerns, or requests regarding this Privacy Policy or your data rights, please reach out to us at: smiwceron@gmail.com"
+            "If you have any questions, concerns, or requests regarding this Privacy Policy or your data rights, please reach out to us at: privacidad@innovatech.fun"
           ]
         }
       ],
@@ -155,7 +156,7 @@ export function PrivacyPolicyModal({ isOpen, onClose, lang }: PrivacyPolicyModal
     },
     pt: {
       title: "Política de Privacidade",
-      lastUpdated: "Última atualização: Julho de 2026",
+      lastUpdated: "Última atualização: Setembro de 2026",
       sections: [
         {
           title: "1. Introdução",
@@ -171,7 +172,7 @@ export function PrivacyPolicyModal({ isOpen, onClose, lang }: PrivacyPolicyModal
           content: [
             "Informações de Conta: Ao fazer login com o Google, coletamos seu nome, e-mail e foto de perfil para fins de personalização e comunidade.",
             "Histórico de Leitura: Registramos notícias lidas e vídeos assistidos para melhorar as recomendações do feed.",
-            "Conteúdo do Usuário: Comentários e respostas escritos por você nos artigos são salvos com segurança na nuvem.",
+            "Conteúdo do Usuário: Comentários e respostas escritos por você nos artículos são salvos com segurança na nuvem.",
             "Anúncios (AdMob): Coletamos IDs de publicidade para veicular anúncios adequados em cooperação com o Google AdMob."
           ]
         },
@@ -186,7 +187,7 @@ export function PrivacyPolicyModal({ isOpen, onClose, lang }: PrivacyPolicyModal
           title: "4. Contato",
           icon: Mail,
           content: [
-            "Para dúvidas ou solicitações legais de dados, entre em contato em: smiwceron@gmail.com"
+            "Para dúvidas ou solicitações legais de dados, entre em contato em: privacidad@innovatech.fun"
           ]
         }
       ],
@@ -195,7 +196,7 @@ export function PrivacyPolicyModal({ isOpen, onClose, lang }: PrivacyPolicyModal
     },
     fr: {
       title: "Politique de Confidentialité",
-      lastUpdated: "Dernière mise à jour : Juillet 2026",
+      lastUpdated: "Dernière mise à jour : Septembre 2026",
       sections: [
         {
           title: "1. Introduction",
@@ -225,7 +226,7 @@ export function PrivacyPolicyModal({ isOpen, onClose, lang }: PrivacyPolicyModal
           title: "4. Contact",
           icon: Mail,
           content: [
-            "Pour toute question ou exercice de vos droits, écrivez à : smiwceron@gmail.com"
+            "Pour toute question ou exercice de vos droits, écrivez à : privacidad@innovatech.fun"
           ]
         }
       ],
@@ -234,7 +235,7 @@ export function PrivacyPolicyModal({ isOpen, onClose, lang }: PrivacyPolicyModal
     },
     de: {
       title: "Datenschutzerklärung",
-      lastUpdated: "Letzte Aktualisierung: Juli 2026",
+      lastUpdated: "Letzte Aktualisierung: September 2026",
       sections: [
         {
           title: "1. Einführung",
@@ -264,7 +265,7 @@ export function PrivacyPolicyModal({ isOpen, onClose, lang }: PrivacyPolicyModal
           title: "4. Kontakt",
           icon: Mail,
           content: [
-            "Bei Fragen zum Datenschutz wenden Sie sich bitte an: smiwceron@gmail.com"
+            "Bei Fragen zum Datenschutz wenden Sie sich bitte an: privacidad@innovatech.fun"
           ]
         }
       ],

@@ -379,7 +379,7 @@ export function MenuDrawer({
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Contacto y Soporte</span>
-                  <span className="text-xs font-bold text-gray-800 dark:text-gray-100 truncate">smiwceron@gmail.com</span>
+                  <span className="text-xs font-bold text-gray-800 dark:text-gray-100 truncate">contacto@innovatech.fun</span>
                 </div>
               </button>
 

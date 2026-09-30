@@ -1090,7 +1090,7 @@ export default function App() {
                     ¿Tienes alguna duda o sugerencia?
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-                    Ponte en contacto directo con el desarrollador de InnovaTech en <span className="font-bold text-gray-700 dark:text-gray-200">smiwceron@gmail.com</span>.
+                    Ponte en contacto directo con el equipo de InnovaTech en <span className="font-bold text-gray-700 dark:text-gray-200">contacto@innovatech.fun</span>.
                   </p>
                 </div>
                 

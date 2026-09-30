@@ -101,12 +101,12 @@ export function ContactPage({ onBack, lang, t }: ContactPageProps) {
               </div>
               <div className="space-y-1 min-w-0">
                 <h3 className="font-extrabold text-sm uppercase text-gray-400 tracking-wider">Correo Directo</h3>
-                <p className="text-base font-bold text-gray-900 dark:text-white truncate">smiwceron@gmail.com</p>
+                <p className="text-base font-bold text-gray-900 dark:text-white truncate">contacto@innovatech.fun</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
-                  Soporte uno a uno, respuestas en menos de 24 horas hábiles.
+                  Atención general y soporte editorial, respuestas en menos de 24 horas hábiles.
                 </p>
                 <a 
-                  href="mailto:smiwceron@gmail.com"
+                  href="mailto:contacto@innovatech.fun"
                   className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline mt-2 cursor-pointer"
                 >
                   Enviar correo directo →

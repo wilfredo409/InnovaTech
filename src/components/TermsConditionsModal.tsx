@@ -63,10 +63,10 @@ export function TermsConditionsModal({ isOpen, onClose, lang }: TermsConditionsM
         ]
       },
       {
-        title: "7. Contacto Legal",
+        title: "7. Contacto Legal y Titularidad",
         icon: HelpCircle,
         content: [
-          "Para cualquier duda o comunicación legal relacionada con estos términos, contáctanos en: smiwceron@gmail.com"
+          "Para cualquier duda o comunicación legal relacionada con estos términos, contáctanos en: contacto@innovatech.fun con copia a privacidad@innovatech.fun"
         ]
       }
     ],

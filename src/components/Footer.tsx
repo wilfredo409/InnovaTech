@@ -142,10 +142,20 @@ export function Footer({
                   <span>Contacto y Soporte Editorial</span>
                 </button>
               </li>
+              <li>
+                <button 
+                  onClick={() => window.dispatchEvent(new CustomEvent("open-cookie-settings"))}
+                  className="inline-flex items-center gap-1.5 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
+                >
+                  <Shield className="w-3.5 h-3.5 text-purple-500" />
+                  <span>Preferencias de Cookies</span>
+                </button>
+              </li>
             </ul>
 
-            <div className="pt-2 text-[11px] text-gray-400 dark:text-gray-500 leading-relaxed font-medium">
-              Contacto directo: <a href="mailto:smiwceron@gmail.com" className="text-blue-600 dark:text-blue-400 hover:underline font-bold">smiwceron@gmail.com</a>
+            <div className="pt-2 text-[11px] text-gray-400 dark:text-gray-500 leading-relaxed font-medium space-y-0.5">
+              <div>Contacto general: <a href="mailto:contacto@innovatech.fun" className="text-blue-600 dark:text-blue-400 hover:underline font-bold">contacto@innovatech.fun</a></div>
+              <div>Redacción y prensa: <a href="mailto:redaccion@innovatech.fun" className="text-blue-600 dark:text-blue-400 hover:underline font-bold">redaccion@innovatech.fun</a></div>
             </div>
           </div>
 
@@ -154,9 +164,9 @@ export function Footer({
         {/* Bottom Bar */}
         <div className="mt-12 pt-6 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">
-            © {new Date().getFullYear()} InnovaTech. Todos los derechos reservados. Desarrollado con tecnología de vanguardia.
+            © {new Date().getFullYear()} InnovaTech Digital Media. Todos los derechos reservados.
           </p>
-          <div className="flex items-center gap-4 text-xs font-semibold text-gray-500 dark:text-gray-400">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3 sm:gap-4 text-xs font-semibold text-gray-500 dark:text-gray-400">
             <button onClick={onOpenPrivacy} className="hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer">
               Privacidad
             </button>
@@ -167,6 +177,13 @@ export function Footer({
             <span>•</span>
             <button onClick={onOpenContact} className="hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer">
               Contacto
+            </button>
+            <span>•</span>
+            <button 
+              onClick={() => window.dispatchEvent(new CustomEvent("open-cookie-settings"))} 
+              className="text-blue-600 dark:text-blue-400 hover:underline transition-colors cursor-pointer"
+            >
+              Cookies
             </button>
           </div>
         </div>

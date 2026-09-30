@@ -113,18 +113,63 @@ export function AboutUsModal({ isOpen, onClose, onOpenContact, lang }: AboutUsMo
                   </div>
                 </div>
 
-                {/* Team & Ownership */}
+                {/* Team & Editorial Board */}
                 <div className="space-y-3">
                   <h3 className="text-sm font-bold text-gray-950 dark:text-white flex items-center gap-2">
                     <Users className="w-4 h-4 text-blue-500" />
-                    <span>Equipo y Desarrollo</span>
+                    <span>Equipo Editorial y Redacción Especializada</span>
                   </h3>
-                  <div className="p-4 bg-gray-50 dark:bg-gray-950/40 border border-gray-100 dark:border-gray-800 rounded-2xl space-y-2">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
-                      InnovaTech es desarrollado y mantenido por un equipo apasionado por la ingeniería de software y la divulgación tecnológica (MobileZonne / InnovaTech Team), encabezado por <strong className="text-gray-900 dark:text-white">smiwceron@gmail.com</strong>.
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
-                      Publicamos actualizaciones diarias sobre inteligencia artificial, procesadores, telefonía móvil, ciencia computacional y tendencias de la industria digital.
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div className="p-3 bg-gray-50 dark:bg-gray-850 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center">CM</div>
+                        <span className="text-xs font-bold text-gray-900 dark:text-white">Carlos Mendoza</span>
+                      </div>
+                      <p className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold">Director Editorial & Analista de Silicio</p>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
+                        Ing. en Computación (12+ años de experiencia en semiconductores GAAFET y computación cuántica).
+                      </p>
+                    </div>
+
+                    <div className="p-3 bg-gray-50 dark:bg-gray-850 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">EM</div>
+                        <span className="text-xs font-bold text-gray-900 dark:text-white">Elena Morales</span>
+                      </div>
+                      <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold">Editora Senior de IA</p>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
+                        M.Sc. en Inteligencia Artificial. Auditora de modelos de pesos abiertos y regulación EU AI Act.
+                      </p>
+                    </div>
+
+                    <div className="p-3 bg-gray-50 dark:bg-gray-850 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-amber-600 text-white text-[10px] font-bold flex items-center justify-center">JO</div>
+                        <span className="text-xs font-bold text-gray-900 dark:text-white">Javier Ortiz</span>
+                      </div>
+                      <p className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">Editor Técnico de Hardware</p>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
+                        Especialista en pruebas de banco, benchmarking de GPUs y arquitectura de placas base.
+                      </p>
+                    </div>
+
+                    <div className="p-3 bg-gray-50 dark:bg-gray-850 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center">SV</div>
+                        <span className="text-xs font-bold text-gray-900 dark:text-white">Sofía Valenzuela</span>
+                      </div>
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">Editora de Ciberseguridad & Redes</p>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
+                        Auditora de seguridad en redes, criptografía post-cuántica y estándares Wi-Fi 7 / 6G.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100/60 dark:border-blue-900/30 rounded-2xl text-xs space-y-1">
+                    <p className="font-bold text-gray-900 dark:text-white">Compromiso Contra el Contenido de Poco Valor:</p>
+                    <p className="text-gray-600 dark:text-gray-300 text-[11px] leading-relaxed">
+                      Nuestros artículos y comparativas son elaborados con fuentes primarias (NIST, IEEE, arXiv, patentes oficiales) e investigados rigurosamente por especialistas humanos, garantizando criterio, análisis técnico y originalidad.
                     </p>
                   </div>
                 </div>

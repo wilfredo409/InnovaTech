@@ -201,4 +201,34 @@ articles.forEach(article => {
   articleCount++;
 });
 
-console.log(`[SSG Prerender] Pre-rendered ${topics.length} category pages and ${articleCount} article pages into dist/ successfully.`);
+// 3. Ensure static legal and info pages are also placed in dist/
+const staticPages = [
+  { src: path.join(__dirname, '..', 'public', 'privacy.html'), paths: ['privacidad/index.html', 'privacy/index.html', 'privacy.html', 'privacidad.html'] },
+  { src: path.join(__dirname, '..', 'public', 'terminos.html'), paths: ['terminos/index.html', 'terms/index.html', 'terminos.html', 'terms.html'] },
+  { src: path.join(__dirname, '..', 'public', 'acerca-de.html'), paths: ['acerca-de/index.html', 'about/index.html', 'acerca-de.html', 'about.html'] },
+  { src: path.join(__dirname, '..', 'public', 'contacto.html'), paths: ['contacto/index.html', 'contact/index.html', 'contacto.html', 'contact.html'] },
+];
+
+staticPages.forEach(({ src, paths: destPaths }) => {
+  if (fs.existsSync(src)) {
+    const content = fs.readFileSync(src, 'utf-8');
+    destPaths.forEach(dest => {
+      const fullDest = path.join(distDir, dest);
+      ensureDir(path.dirname(fullDest));
+      fs.writeFileSync(fullDest, content, 'utf-8');
+    });
+  }
+});
+
+// Ensure ads.txt and robots.txt in dist/
+const adsSrc = path.join(__dirname, '..', 'public', 'ads.txt');
+if (fs.existsSync(adsSrc)) {
+  fs.writeFileSync(path.join(distDir, 'ads.txt'), fs.readFileSync(adsSrc, 'utf-8'), 'utf-8');
+}
+const robotsSrc = path.join(__dirname, '..', 'public', 'robots.txt');
+if (fs.existsSync(robotsSrc)) {
+  fs.writeFileSync(path.join(distDir, 'robots.txt'), fs.readFileSync(robotsSrc, 'utf-8'), 'utf-8');
+}
+
+console.log(`[SSG Prerender] Pre-rendered ${topics.length} category pages, ${articleCount} article pages, and all static legal/E-E-A-T pages into dist/ successfully.`);
+
