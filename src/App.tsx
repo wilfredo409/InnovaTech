@@ -389,8 +389,14 @@ export default function App() {
         setSelectedArticle(null);
       } else if (path.startsWith('/articulo/') || path.startsWith('/article/') || path.startsWith('/noticia/')) {
         const rawId = decodeURIComponent(path.split('/')[2] || '');
-        const match = articles.find(a => a.id === rawId || a.id.toLowerCase() === rawId.toLowerCase()) ||
-                      INITIAL_ARTICLES.find(a => a.id === rawId || a.id.toLowerCase() === rawId.toLowerCase());
+        const cleanTarget = rawId.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const findInList = (list: Article[]) => list.find(a => {
+          if (!a || !a.id) return false;
+          if (a.id === rawId || a.id.toLowerCase() === rawId.toLowerCase()) return true;
+          const aClean = a.id.toLowerCase().replace(/[^a-z0-9]/g, '');
+          return aClean === cleanTarget || (cleanTarget.length > 8 && aClean.includes(cleanTarget));
+        });
+        const match = findInList(articles) || findInList(INITIAL_ARTICLES);
         if (match) {
           setSelectedArticle(match);
           setShow404(false);
@@ -540,15 +546,32 @@ export default function App() {
     if (isArticleUrl) {
       const rawId = decodeURIComponent(window.location.pathname.split('/')[2] || '');
       if (rawId) {
-        const found = INITIAL_ARTICLES.find(a => a.id === rawId || a.id.toLowerCase() === rawId.toLowerCase());
+        const cleanTarget = rawId.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const findInList = (list: Article[]) => list.find(a => {
+          if (!a || !a.id) return false;
+          if (a.id === rawId || a.id.toLowerCase() === rawId.toLowerCase()) return true;
+          const aClean = a.id.toLowerCase().replace(/[^a-z0-9]/g, '');
+          return aClean === cleanTarget || (cleanTarget.length > 8 && aClean.includes(cleanTarget));
+        });
+
+        const found = findInList(INITIAL_ARTICLES);
         if (found) {
           setSelectedArticle(found);
+          setShow404(false);
         } else {
-          fetch('/api/articles')
-            .then(r => r.json())
+          // Fallback fetch: try static public /api/articles.json then dynamic endpoint
+          const dynamicUrl = window.location.hostname === 'innovatech.fun' 
+            ? 'https://innovatech-669972812446.us-east1.run.app/api/articles' 
+            : getApiUrl('/api/articles');
+
+          fetch('/api/articles.json')
+            .then(r => r.ok ? r.json() : fetch(dynamicUrl).then(res => res.json()))
             .then(data => {
-              const matched = (data.articles || []).find((a: Article) => a.id === rawId || a.id.toLowerCase() === rawId.toLowerCase());
-              if (matched) setSelectedArticle(matched);
+              const matched = findInList(data.articles || []);
+              if (matched) {
+                setSelectedArticle(matched);
+                setShow404(false);
+              }
             })
             .catch(() => {});
         }

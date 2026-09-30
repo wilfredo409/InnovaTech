@@ -68,16 +68,97 @@ export function recordPublishedArticle(item: PublishHistoryItem) {
 }
 
 /**
- * Finds the next article that has not yet been published to Facebook
+ * Formats a rich, informative, engaging Facebook editorial post with multiple paragraphs,
+ * technical context, author attribution, and direct links.
  */
-export function getNextUnpublishedArticle(articles: StoredArticle[]): StoredArticle | null {
+export function formatRichFacebookPost(article: StoredArticle, articleUrl: string): string {
+  const cleanTitle = (article.title || '').replace(/<\/?[^>]+(>|$)/g, '').trim();
+  
+  // Extract paragraphs by converting HTML blocks to double newlines and cleaning entities
+  const rawText = (article.content || article.contentSnippet || '')
+    .replace(/<\/?(?:h[1-6]|p|div|li)[^>]*>/gi, '\n\n')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&');
+
+  const paragraphs = rawText
+    .split('\n\n')
+    .map(p => p.replace(/\s+/g, ' ').trim())
+    .filter(p => p.length > 60 && !p.toLowerCase().startsWith('estructura y entorno') && !p.toLowerCase().startsWith('fuente:'));
+
+  let bodyExcerpt = '';
+  if (paragraphs.length >= 2) {
+    bodyExcerpt = paragraphs.slice(0, 2).join('\n\n');
+  } else if (paragraphs.length === 1) {
+    bodyExcerpt = paragraphs[0];
+  } else {
+    bodyExcerpt = (article.contentSnippet || '').replace(/<[^>]*>/g, '').trim();
+  }
+
+  // If still short, try including up to 3 paragraphs
+  if (bodyExcerpt.length < 250 && paragraphs.length > 2) {
+    bodyExcerpt = paragraphs.slice(0, 3).join('\n\n');
+  }
+
+  // Trim to max 1200 characters for high-density rich editorial reading on Facebook
+  if (bodyExcerpt.length > 1200) {
+    bodyExcerpt = bodyExcerpt.slice(0, 1190).trim() + '...';
+  }
+
+  const topicTags: Record<string, string> = {
+    ai: '#InteligenciaArtificial #IA #Innovacion #InnovaTech #TechNews',
+    ia: '#InteligenciaArtificial #IA #Innovacion #InnovaTech #TechNews',
+    hardware: '#Hardware #Semiconductores #Chips #InnovaTech #Tech',
+    software: '#Software #Desarrollo #Programacion #InnovaTech #Tech',
+    gadgets: '#Gadgets #Smartphones #Tecnologia #InnovaTech #Review',
+    cybersecurity: '#Ciberseguridad #Privacidad #SeguridadInformatica #InnovaTech',
+    ciberseguridad: '#Ciberseguridad #Privacidad #SeguridadInformatica #InnovaTech',
+    latest: '#Tecnologia #Innovacion #NoticiasTech #InnovaTech'
+  };
+
+  const tags = topicTags[(article.topic || 'latest').toLowerCase()] || '#Tecnologia #InnovaTech';
+  const author = article.creator || 'Redacción InnovaTech';
+  const category = (article.categories && article.categories[0]) || 'Tecnología';
+
+  return [
+    `⚡ ${cleanTitle}`,
+    `\n📂 ${category.toUpperCase()} | Por ${author}`,
+    `\n${bodyExcerpt}`,
+    `\n🔍 Análisis y Ficha Técnica:`,
+    `Descubre todos los benchmarks, especificaciones completas y repercusiones en la industria.`,
+    `\n📖 Lee el artículo completo en nuestro sitio web:`,
+    `${articleUrl}`,
+    `\n👇 (Enlace directo también disponible en el primer comentario)`,
+    `\n${tags}`
+  ].join('\n');
+}
+
+/**
+ * Finds the next article that has not yet been published to Facebook,
+ * verifying that it has an accessible image and substantive content.
+ */
+export async function getNextUnpublishedArticle(articles: StoredArticle[]): Promise<StoredArticle | null> {
   if (!articles || !articles.length) return null;
   const history = loadPublishHistory();
   const publishedIds = new Set(history.map(h => h.articleId));
 
-  // Find first article not in publishedIds
+  // Find candidate articles not in publishedIds with accessible images
   for (const article of articles) {
-    if (!publishedIds.has(article.id)) {
+    if (!publishedIds.has(article.id) && article.title && article.id) {
+      // Prioritize articles with verified valid images
+      if (article.imageUrl && article.imageUrl.startsWith('http')) {
+        const hasImg = await isAccessibleImageUrl(article.imageUrl);
+        if (hasImg) {
+          return article;
+        }
+      }
+    }
+  }
+
+  // Second pass: any unpublished article even if image needs fallback
+  for (const article of articles) {
+    if (!publishedIds.has(article.id) && article.title && article.id) {
       return article;
     }
   }
@@ -140,23 +221,8 @@ export async function publishArticleToFacebook(article: StoredArticle): Promise<
   try {
     const articleUrl = `https://innovatech.fun/articulo/${encodeURIComponent(article.id)}`;
     
-    // Create clean tags based on article topic
-    const topicTags: Record<string, string> = {
-      ai: '#InteligenciaArtificial #IA #InnovaTech #TechNews',
-      ia: '#InteligenciaArtificial #IA #InnovaTech #TechNews',
-      hardware: '#Hardware #Semiconductores #Chips #InnovaTech',
-      software: '#Software #Desarrollo #Programacion #InnovaTech',
-      gadgets: '#Gadgets #Smartphones #Tecnologia #InnovaTech',
-      cybersecurity: '#Ciberseguridad #Privacidad #Seguridad #InnovaTech',
-      ciberseguridad: '#Ciberseguridad #Privacidad #Seguridad #InnovaTech',
-      latest: '#Tecnologia #Innovacion #InnovaTech #Tech'
-    };
-
-    const tags = topicTags[(article.topic || 'latest').toLowerCase()] || '#Tecnologia #InnovaTech';
-    const cleanSnippet = (article.contentSnippet || '').replace(/<[^>]*>/g, '').trim().slice(0, 240);
-    
-    // Caption pointing reader to the first comment for the full link
-    const photoCaption = `🚀 ${article.title}\n\n${cleanSnippet ? cleanSnippet + '...\n\n' : ''}👇 Enlace directo al análisis y especificaciones técnicas completas en el primer comentario.\n\n${tags}`;
+    // Generate comprehensive editorial post with detailed context, technical takeaways, and links
+    const richPostMessage = formatRichFacebookPost(article, articleUrl);
 
     // Verify if article image URL is accessible
     const hasValidImage = await isAccessibleImageUrl(article.imageUrl);
@@ -169,7 +235,7 @@ export async function publishArticleToFacebook(article: StoredArticle): Promise<
       // 1. Post as photo
       const photoParams = new URLSearchParams();
       photoParams.set('url', article.imageUrl);
-      photoParams.set('caption', photoCaption);
+      photoParams.set('caption', richPostMessage);
       photoParams.set('access_token', pageToken);
 
       const photoRes = await fetch(`https://graph.facebook.com/v19.0/${encodeURIComponent(pageId)}/photos`, {
@@ -190,7 +256,6 @@ export async function publishArticleToFacebook(article: StoredArticle): Promise<
 
     // Fallback to feed post if photo upload did not produce a post ID
     if (!createdPostId) {
-      const feedMessage = `🚀 ${article.title}\n\n${cleanSnippet ? cleanSnippet + '...\n\n' : ''}👇 Enlace directo al análisis completo en el primer comentario.\n\n${tags}`;
       const feedEndpoint = `https://graph.facebook.com/v19.0/${encodeURIComponent(pageId)}/feed`;
 
       const feedRes = await fetch(feedEndpoint, {
@@ -200,7 +265,7 @@ export async function publishArticleToFacebook(article: StoredArticle): Promise<
           'Accept': 'application/json'
         },
         body: JSON.stringify({
-          message: feedMessage,
+          message: richPostMessage,
           link: articleUrl,
           access_token: pageToken
         })
@@ -243,8 +308,8 @@ export async function publishArticleToFacebook(article: StoredArticle): Promise<
       } else {
         console.warn(`[Facebook Publisher] Comentario no pudo publicarse (${commentData?.error?.message}). Actualizando pie del post con link de respaldo.`);
         
-        // Fallback: If pages_manage_engagement is not granted, update post caption to include the link so users always have it!
-        const fullCaption = `🚀 ${article.title}\n\n${cleanSnippet ? cleanSnippet + '...\n\n' : ''}📖 Lee el análisis completo y las especificaciones técnicas en InnovaTech:\n${articleUrl}\n\n${tags}`;
+        // Fallback: If pages_manage_engagement is not granted, ensure post caption has full rich content and link
+        const fullCaption = richPostMessage;
         await fetch(`https://graph.facebook.com/v19.0/${encodeURIComponent(targetCommentId)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -384,7 +449,7 @@ export function startFacebookScheduler(
         return;
       }
 
-      const nextArticle = getNextUnpublishedArticle(articles);
+      const nextArticle = await getNextUnpublishedArticle(articles);
       if (!nextArticle) {
         console.log(`[Facebook Scheduler] No hay artículos nuevos pendientes en la cola.`);
         return;

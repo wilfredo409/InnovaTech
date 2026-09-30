@@ -514,6 +514,16 @@ export function saveArticlesToDisk() {
     }
     fs.writeFileSync(DB_FILE, JSON.stringify(articlesMemoryStore, null, 2), 'utf-8');
     fs.writeFileSync(SYNC_STATE_FILE, JSON.stringify({ lastSyncTimestamp }, null, 2), 'utf-8');
+
+    // Also synchronize TypeScript initialArticles.ts for the frontend SPA
+    const tsPath = path.join(process.cwd(), 'src', 'data', 'initialArticles.ts');
+    const tsCode = `import { Article } from "../types";\n\nexport const INITIAL_ARTICLES: Article[] = ${JSON.stringify(articlesMemoryStore, null, 2)};\n`;
+    fs.writeFileSync(tsPath, tsCode, 'utf-8');
+
+    // Keep public/api/articles.json available for static CDN/S3 environments
+    const publicApiDir = path.join(process.cwd(), 'public', 'api');
+    if (!fs.existsSync(publicApiDir)) fs.mkdirSync(publicApiDir, { recursive: true });
+    fs.writeFileSync(path.join(publicApiDir, 'articles.json'), JSON.stringify({ articles: articlesMemoryStore, total: articlesMemoryStore.length }, null, 2), 'utf-8');
   } catch (err: any) {
     console.error("[InnovaTech DB] Failed to save articles to disk:", err.message);
   }

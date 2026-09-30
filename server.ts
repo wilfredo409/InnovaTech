@@ -1571,7 +1571,7 @@ app.post("/api/social/facebook/publish-latest", async (_req, res) => {
 
 app.post("/api/social/facebook/publish-next", async (_req, res) => {
   const articles = getAllArticles();
-  const nextArticle = getNextUnpublishedArticle(articles);
+  const nextArticle = await getNextUnpublishedArticle(articles);
   if (!nextArticle) {
     return res.status(404).json({ success: false, error: "No hay artículos pendientes en la cola." });
   }
@@ -1725,20 +1725,22 @@ async function startServer() {
     });
   }, 3000);
 
-  // Automated 30-minute recurring Facebook publishing
-  setTimeout(async () => {
-    try {
-      const fbCheck = await verifyFacebookConnection();
-      if (fbCheck.valid) {
-        console.log("[InnovaTech Server] Credenciales de Facebook activas. Iniciando publicador autónomo cada 30 minutos...");
-        startFacebookScheduler(getAllArticles, 30);
-      } else {
-        console.warn("[InnovaTech Server] Facebook publisher en pausa: credenciales incompletas o no validadas.", fbCheck.error);
+  // Automated Facebook publishing: disabled in local/preview development to avoid publishing unreleased articles
+  if (process.env.NODE_ENV === "production" && process.env.ENABLE_FACEBOOK_SCHEDULER === "true") {
+    setTimeout(async () => {
+      try {
+        const fbCheck = await verifyFacebookConnection();
+        if (fbCheck.valid) {
+          console.log("[InnovaTech Server] Producción: Iniciando publicador de Facebook cada 30 minutos...");
+          startFacebookScheduler(getAllArticles, 30);
+        }
+      } catch (e: any) {
+        console.warn("[InnovaTech Server] Error verificando Facebook en producción:", e.message);
       }
-    } catch (e: any) {
-      console.warn("[InnovaTech Server] Error verificando Facebook al arrancar:", e.message);
-    }
-  }, 2000);
+    }, 5000);
+  } else {
+    console.log("[InnovaTech Server] Entorno local/preview: Publicador automático de Facebook en pausa (solo habilitado en la app lanzada en producción).");
+  }
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
