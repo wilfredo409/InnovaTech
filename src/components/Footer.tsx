@@ -1,8 +1,9 @@
 import React from "react";
 import { 
   Shield, FileText, Mail, Sparkles, Globe, Cpu, 
-  HelpCircle, Info, ExternalLink, Heart 
+  HelpCircle, Info, ExternalLink, Heart, Facebook 
 } from "lucide-react";
+import { FACEBOOK_PAGE_URL } from "../lib/utils";
 
 interface FooterProps {
   onOpenAbout: () => void;
@@ -48,6 +49,21 @@ export function Footer({
                 <Sparkles className="w-3 h-3 text-indigo-500" />
                 <span>Actualización Diaria</span>
               </span>
+            </div>
+
+            {/* Social Media Link */}
+            <div className="pt-2">
+              <a
+                href={FACEBOOK_PAGE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200/60 dark:border-blue-800/60 text-xs font-bold transition-all shadow-sm group hover:scale-[1.02]"
+                title="Síguenos en nuestra página oficial de Facebook"
+              >
+                <Facebook className="w-4 h-4 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform fill-blue-600/10" />
+                <span>Página de Facebook @InnovaTech</span>
+                <ExternalLink className="w-3 h-3 opacity-60 ml-0.5" />
+              </a>
             </div>
           </div>
 
@@ -167,6 +183,16 @@ export function Footer({
             © {new Date().getFullYear()} InnovaTech Digital Media. Todos los derechos reservados.
           </p>
           <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3 sm:gap-4 text-xs font-semibold text-gray-500 dark:text-gray-400">
+            <a 
+              href={FACEBOOK_PAGE_URL} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:underline font-bold transition-colors"
+            >
+              <Facebook className="w-3.5 h-3.5" />
+              <span>Facebook</span>
+            </a>
+            <span>•</span>
             <button onClick={onOpenPrivacy} className="hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer">
               Privacidad
             </button>

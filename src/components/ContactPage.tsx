@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Mail, Clock, Send, CheckCircle2, AlertCircle, Building, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Mail, Clock, Send, CheckCircle2, AlertCircle, Building, ShieldCheck, Facebook, ExternalLink } from 'lucide-react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { FACEBOOK_PAGE_URL } from '../lib/utils';
 
 interface ContactPageProps {
   onBack: () => void;
@@ -140,6 +141,29 @@ export function ContactPage({ onBack, lang, t }: ContactPageProps) {
                 <p className="text-xs text-gray-500 dark:text-gray-400 font-medium leading-relaxed">
                   Toda la información enviada mediante este formulario es manejada de manera 100% confidencial y protegida bajo nuestras normas de privacidad.
                 </p>
+              </div>
+            </div>
+
+            {/* Facebook Community Card */}
+            <div className="bg-gradient-to-br from-blue-50/70 to-indigo-50/30 dark:from-blue-950/20 dark:to-indigo-950/10 rounded-3xl p-6 border border-blue-200/50 dark:border-blue-900/30 shadow-sm flex items-start gap-4 hover:shadow-md transition-all">
+              <div className="p-3 bg-blue-600 text-white rounded-2xl shadow-md shadow-blue-600/20 shrink-0">
+                <Facebook className="w-5 h-5 fill-white" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-extrabold text-sm uppercase text-blue-600 dark:text-blue-400 tracking-wider">Comunidad y Redes</h3>
+                <p className="text-base font-bold text-gray-900 dark:text-white">Página de Facebook Oficial</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium leading-relaxed">
+                  Síguenos para enterarte al instante de nuevas publicaciones, análisis en profundidad y debates de tecnología.
+                </p>
+                <a 
+                  href={FACEBOOK_PAGE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline mt-2 cursor-pointer"
+                >
+                  <span>Visitar @InnovaTech en Facebook</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
               </div>
             </div>
 

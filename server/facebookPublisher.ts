@@ -68,6 +68,22 @@ export function recordPublishedArticle(item: PublishHistoryItem) {
 }
 
 /**
+ * Clears the publication history so that all articles can be republished
+ */
+export function clearPublishHistory(): void {
+  try {
+    const dir = path.dirname(HISTORY_FILE_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(HISTORY_FILE_PATH, JSON.stringify([], null, 2), 'utf-8');
+    console.log('[Facebook Publisher] Historial de publicaciones reiniciado a vacío.');
+  } catch (err) {
+    console.error('[Facebook Publisher] Error reiniciando historial:', err);
+  }
+}
+
+/**
  * Formats a rich, informative, engaging Facebook editorial post with multiple paragraphs,
  * technical context, author attribution, and direct links.
  */
@@ -224,61 +240,61 @@ export async function publishArticleToFacebook(article: StoredArticle): Promise<
     // Generate comprehensive editorial post with detailed context, technical takeaways, and links
     const richPostMessage = formatRichFacebookPost(article, articleUrl);
 
-    // Verify if article image URL is accessible
-    const hasValidImage = await isAccessibleImageUrl(article.imageUrl);
+    // 1. Publish as a REAL publication on the Page's timeline feed (/feed) with article link and rich message
+    const feedEndpoint = `https://graph.facebook.com/v19.0/${encodeURIComponent(pageId)}/feed`;
 
     let createdPostId: string | null = null;
     let createdPhotoId: string | null = null;
-    let postType: 'photo' | 'feed' = 'feed';
+    let postType: 'feed' | 'photo' = 'feed';
 
-    if (hasValidImage && article.imageUrl) {
-      // 1. Post as photo
-      const photoParams = new URLSearchParams();
-      photoParams.set('url', article.imageUrl);
-      photoParams.set('caption', richPostMessage);
-      photoParams.set('access_token', pageToken);
+    const feedRes = await fetch(feedEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        message: richPostMessage,
+        link: articleUrl,
+        published: true,
+        access_token: pageToken
+      })
+    });
 
-      const photoRes = await fetch(`https://graph.facebook.com/v19.0/${encodeURIComponent(pageId)}/photos`, {
-        method: 'POST',
-        body: photoParams
-      });
+    const feedData: any = await feedRes.json();
+    if (feedRes.ok && feedData && feedData.id) {
+      createdPostId = feedData.id;
+      postType = 'feed';
+      console.log(`[Facebook Publisher] ¡Publicación creada con éxito en el muro/feed (PÚBLICA)! Post ID: ${createdPostId}`);
+    } else {
+      console.warn(`[Facebook Publisher] Publicación directa en feed no completada (${feedData?.error?.message}). Intentando fallback con foto pública...`);
 
-      const photoData: any = await photoRes.json();
-      if (photoRes.ok && photoData && (photoData.post_id || photoData.id)) {
-        createdPhotoId = photoData.id;
-        createdPostId = photoData.post_id || photoData.id;
-        postType = 'photo';
-        console.log(`[Facebook Publisher] ¡Foto publicada con éxito! Post ID: ${createdPostId}, Photo ID: ${createdPhotoId}`);
-      } else {
-        console.warn(`[Facebook Publisher] Fallo al subir foto (${photoData?.error?.message}). Intentando publicación en feed...`);
+      // Fallback: If feed link publishing fails, try posting with photo
+      const hasValidImage = await isAccessibleImageUrl(article.imageUrl);
+      if (hasValidImage && article.imageUrl) {
+        const photoParams = new URLSearchParams();
+        photoParams.set('url', article.imageUrl);
+        photoParams.set('caption', richPostMessage);
+        photoParams.set('published', 'true');
+        photoParams.set('access_token', pageToken);
+
+        const photoRes = await fetch(`https://graph.facebook.com/v19.0/${encodeURIComponent(pageId)}/photos`, {
+          method: 'POST',
+          body: photoParams
+        });
+
+        const photoData: any = await photoRes.json();
+        if (photoRes.ok && photoData && (photoData.post_id || photoData.id)) {
+          createdPhotoId = photoData.id;
+          createdPostId = photoData.post_id || photoData.id;
+          postType = 'photo';
+          console.log(`[Facebook Publisher] Fallback con foto completado: Post ID: ${createdPostId}`);
+        }
       }
-    }
 
-    // Fallback to feed post if photo upload did not produce a post ID
-    if (!createdPostId) {
-      const feedEndpoint = `https://graph.facebook.com/v19.0/${encodeURIComponent(pageId)}/feed`;
-
-      const feedRes = await fetch(feedEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          message: richPostMessage,
-          link: articleUrl,
-          access_token: pageToken
-        })
-      });
-
-      const feedData: any = await feedRes.json();
-      if (feedRes.ok && feedData && feedData.id) {
-        createdPostId = feedData.id;
-        postType = 'feed';
-        console.log(`[Facebook Publisher] Post publicado en feed: ${createdPostId}`);
-      } else {
+      if (!createdPostId) {
         const errorMsg = feedData?.error?.message || `HTTP ${feedRes.status}`;
-        console.error(`[Facebook Publisher] Error publicando en feed:`, errorMsg);
+        console.error(`[Facebook Publisher] Error publicando:`, errorMsg);
         return {
           success: false,
           error: errorMsg
@@ -395,6 +411,28 @@ export async function verifyFacebookConnection(customPageId?: string, customToke
         category: data.category
       };
     } else {
+      // If direct page query failed, check if this is a User Token that manages the page and can be exchanged
+      try {
+        const accountsRes = await fetch(`https://graph.facebook.com/v19.0/me/accounts?access_token=${encodeURIComponent(pageToken)}`);
+        const accountsData: any = await accountsRes.json();
+        if (accountsRes.ok && accountsData?.data && Array.isArray(accountsData.data) && accountsData.data.length > 0) {
+          const matchedPage = accountsData.data.find((p: any) => p.id === pageId) || accountsData.data[0];
+          if (matchedPage && matchedPage.access_token) {
+            console.log(`[Facebook Publisher] Token de usuario canjeado automáticamente por Token de Página permanente: ${matchedPage.name} (${matchedPage.id})`);
+            setRuntimeFacebookCredentials(matchedPage.id, matchedPage.access_token);
+            return {
+              valid: true,
+              pageId: matchedPage.id,
+              pageName: matchedPage.name,
+              category: matchedPage.category || 'Página de Facebook',
+              diagnostic: 'Token de usuario canjeado automáticamente por Token de Página permanente.'
+            };
+          }
+        }
+      } catch (exchangeErr) {
+        // Fallback silently
+      }
+
       const errorMsg = data?.error?.message || `HTTP ${response.status}`;
       const code = data?.error?.code;
       let diagnostic: string | undefined;

@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { format } from "date-fns";
 import sanitizeHtml from "sanitize-html";
 import { motion } from "motion/react";
-import { ArrowLeft, Share2, Bookmark, ExternalLink, Play, Pause, Volume2, VolumeX, RotateCcw, RotateCw, Trash2, Radio, User, Sparkles } from "lucide-react";
+import { ArrowLeft, Share2, Bookmark, ExternalLink, Play, Pause, Volume2, VolumeX, RotateCcw, RotateCw, Trash2, Radio, User, Sparkles, Facebook } from "lucide-react";
 import { Article } from "../types";
 import { collection, query, where, addDoc, deleteDoc, doc, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { User as FirebaseUser } from "firebase/auth";
 import { handleFirestoreError, OperationType } from "../lib/firestore-errors";
-import { getApiUrl, cleanArticleTitle } from "../lib/utils";
+import { getApiUrl, cleanArticleTitle, FACEBOOK_PAGE_URL } from "../lib/utils";
 import { InArticleAd } from "./AdSenseBanner";
 import { AD_SLOTS } from "../lib/adConfig";
 
@@ -954,7 +954,17 @@ export function ArticleView({
           >
             <ArrowLeft className="w-6 h-6" />
           </button>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            <a 
+              href={FACEBOOK_PAGE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-600 dark:text-blue-400 transition-colors"
+              title="Síguenos en nuestra página oficial de Facebook"
+              aria-label="Página de Facebook"
+            >
+              <Facebook className="w-5 h-5 fill-blue-600/10" />
+            </a>
             <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
               <Bookmark className="w-5 h-5" />
             </button>
@@ -1205,6 +1215,32 @@ export function ArticleView({
             </div>
           )}
           
+          {/* Banner Síguenos en Facebook */}
+          <div className="my-8 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-50 via-indigo-50/50 to-blue-50 dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-blue-950/30 border border-blue-100 dark:border-blue-900/40 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
+                <Facebook className="w-6 h-6 fill-white" />
+              </div>
+              <div>
+                <h4 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">
+                  Únete a la comunidad de InnovaTech en Facebook
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Noticias diarias de tecnología, debates sobre IA y análisis en tiempo real.
+                </p>
+              </div>
+            </div>
+            <a
+              href={FACEBOOK_PAGE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-500/20 transition-all flex items-center gap-2 hover:scale-[1.02]"
+            >
+              <span>Seguir Página</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+
           <CommentsSection 
             articleId={article.id} 
             articleTitle={article.title}

@@ -74,3 +74,21 @@ export function getApiUrl(path: string): string {
   }
   return path;
 }
+
+/**
+ * Official Facebook Page URL where posts are published
+ */
+export const FACEBOOK_PAGE_URL = "https://www.facebook.com/share/19yG89kdBd/";
+
+/**
+ * Single Super Admin Email authorized to view and access administration panels
+ */
+export const ADMIN_EMAIL = "smiwceron@gmail.com";
+
+/**
+ * Returns true only if the user is authenticated with the admin email
+ */
+export function isAdminUser(user: { email?: string | null } | null | undefined): boolean {
+  if (!user || !user.email) return false;
+  return user.email.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase().trim();
+}

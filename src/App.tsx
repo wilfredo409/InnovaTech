@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Bell, Search, User, Menu, Globe, Check, LogOut, LogIn, Play, Pause, RotateCcw, RotateCw, X, AlertTriangle, Home, Mail, Sun, Moon } from 'lucide-react';
+import { Bell, Search, User, Menu, Globe, Check, LogOut, LogIn, Play, Pause, RotateCcw, RotateCw, X, AlertTriangle, Home, Mail, Sun, Moon, Facebook, RefreshCw } from 'lucide-react';
 import { Article, Topic } from './types';
 import { NewsFeed } from './components/NewsFeed';
 import { ArticleView } from './components/ArticleView';
@@ -14,6 +14,7 @@ import { SearchModal } from './components/SearchModal';
 import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
 import { TermsConditionsModal } from './components/TermsConditionsModal';
 import { AboutUsModal } from './components/AboutUsModal';
+import { FacebookPublisherModal } from './components/FacebookPublisherModal';
 import { CookieConsentBanner } from './components/CookieConsentBanner';
 import { Footer } from './components/Footer';
 import { ContactPage } from './components/ContactPage';
@@ -21,7 +22,7 @@ import { INITIAL_ARTICLES } from './data/initialArticles';
 import { ensureClientUniqueArticles } from './lib/uniqueImages';
 import { auth, db } from './lib/firebase';
 import { handleFirestoreError, OperationType } from './lib/firestore-errors';
-import { getApiUrl } from './lib/utils';
+import { getApiUrl, FACEBOOK_PAGE_URL } from './lib/utils';
 import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { doc, getDoc, setDoc, query, collection, where, onSnapshot, deleteDoc, getDocs } from 'firebase/firestore';
 import { AD_SLOTS } from './lib/adConfig';   // ← agregado
@@ -230,6 +231,7 @@ export default function App() {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
+  const [showFacebookModal, setShowFacebookModal] = useState(false);
   const [show404, setShow404] = useState(false);
   const [showContactPage, setShowContactPage] = useState(false);
 
@@ -899,30 +901,61 @@ export default function App() {
     }
   }, [isAnyOverlayOpen]);
 
-  useEffect(() => {
+  const [isRefreshingNews, setIsRefreshingNews] = useState(false);
+
+  const fetchNews = async (showSpinner: boolean = true) => {
     if (!lang) return;
-    
-    async function fetchNews() {
-      setLoading(true);
-      try {
-        const res = await fetch(getApiUrl(`/api/news?topic=${activeTopic}&lang=${lang}`));
-        if (!res.ok) throw new Error('Network response was not ok');
-        const data = await res.json();
-        if (data.articles && data.articles.length > 0) {
-          setArticles(ensureClientUniqueArticles(data.articles, activeTopic));
-        }
-        if (data.translationFailed) {
-          showToast(t('Translation temporarily unavailable. Showing in English.'));
-        }
-      } catch (error) {
-        console.error("Error loading news:", error);
-      } finally {
-        setLoading(false);
+    if (showSpinner) setLoading(true);
+    try {
+      const res = await fetch(getApiUrl(`/api/news?topic=${activeTopic}&lang=${lang}&_t=${Date.now()}`));
+      if (!res.ok) throw new Error('Network response was not ok');
+      const data = await res.json();
+      if (data.articles && data.articles.length > 0) {
+        setArticles(ensureClientUniqueArticles(data.articles, activeTopic));
       }
+      if (data.translationFailed) {
+        showToast(t('Translation temporarily unavailable. Showing in English.'));
+      }
+    } catch (error) {
+      console.error("Error loading news:", error);
+    } finally {
+      if (showSpinner) setLoading(false);
     }
-    
-    fetchNews();
+  };
+
+  // Initial and topic/lang change fetch
+  useEffect(() => {
+    fetchNews(true);
   }, [activeTopic, lang]);
+
+  // Automatic Background News Polling: keep production and preview tabs fresh every 5 minutes
+  useEffect(() => {
+    const pollTimer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchNews(false); // background silent update without spinner
+      }
+    }, 5 * 60 * 1000);
+    return () => clearInterval(pollTimer);
+  }, [activeTopic, lang]);
+
+  const handleManualRefreshNews = async () => {
+    try {
+      setIsRefreshingNews(true);
+      // Trigger background sync on server if admin or normal fetch
+      await fetch(getApiUrl('/api/sync-news'), {
+        method: 'POST',
+        headers: { 'x-admin-email': user?.email || '' }
+      }).catch(() => {});
+
+      await fetchNews(false);
+      showToast("Noticias actualizadas con éxito.");
+    } catch (err: any) {
+      console.error("Error refreshing news:", err);
+      showToast("Error al actualizar noticias.");
+    } finally {
+      setIsRefreshingNews(false);
+    }
+  };
 
   if (show404) {
     return (
@@ -972,6 +1005,16 @@ export default function App() {
           </div>
           
           <div className="flex items-center gap-1 sm:gap-2">
+            <a
+              href={FACEBOOK_PAGE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-600 dark:text-blue-400 transition-colors"
+              title="Síguenos en Facebook (@InnovaTech)"
+              aria-label="Página de Facebook InnovaTech"
+            >
+              <Facebook className="w-5 h-5 fill-blue-600/10" />
+            </a>
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors"
@@ -1069,26 +1112,41 @@ export default function App() {
           </div>
         </div>
         
-        {/* Topics Scroll */}
+        {/* Topics Scroll & Auto-Updater */}
         {!showContactPage && (
-          <div className="w-full overflow-x-auto scrollbar-hide px-4 sm:px-6 max-w-5xl mx-auto">
-            <div className="flex gap-6 pb-3 pt-1 w-max">
-              {TOPICS.map(topic => (
-                <button
-                  key={topic.id}
-                  onClick={() => handleTopicSelect(topic.id)}
-                  className={`text-sm font-medium whitespace-nowrap transition-colors relative ${
-                    activeTopic === topic.id 
-                      ? 'text-gray-900 dark:text-white' 
-                      : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
-                  }`}
-                >
-                  {t(topic.label)}
-                  {activeTopic === topic.id && (
-                    <span className="absolute -bottom-[13px] left-0 right-0 h-0.5 bg-gray-900 dark:bg-white rounded-t-full"></span>
-                  )}
-                </button>
-              ))}
+          <div className="w-full px-4 sm:px-6 max-w-5xl mx-auto flex items-center justify-between gap-3">
+            <div className="overflow-x-auto scrollbar-hide flex-1">
+              <div className="flex gap-6 pb-3 pt-1 w-max">
+                {TOPICS.map(topic => (
+                  <button
+                    key={topic.id}
+                    onClick={() => handleTopicSelect(topic.id)}
+                    className={`text-sm font-medium whitespace-nowrap transition-colors relative ${
+                      activeTopic === topic.id 
+                        ? 'text-gray-900 dark:text-white' 
+                        : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    {t(topic.label)}
+                    {activeTopic === topic.id && (
+                      <span className="absolute -bottom-[13px] left-0 right-0 h-0.5 bg-gray-900 dark:bg-white rounded-t-full"></span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick News Refresh / Auto-Updater button */}
+            <div className="pb-3 pt-1 shrink-0">
+              <button
+                onClick={handleManualRefreshNews}
+                disabled={isRefreshingNews || loading}
+                title="Actualizar noticias en tiempo real"
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/80 dark:hover:bg-gray-700/80 transition-all cursor-pointer disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3 h-3 ${isRefreshingNews ? 'animate-spin text-blue-600 dark:text-blue-400' : ''}`} />
+                <span className="hidden sm:inline">Actualizar</span>
+              </button>
             </div>
           </div>
         )}
@@ -1190,6 +1248,10 @@ export default function App() {
           navigateTo('/contacto');
           setIsMenuOpen(false);
         }}
+        onOpenFacebookAdmin={() => {
+          setShowFacebookModal(true);
+          setIsMenuOpen(false);
+        }}
       />
 
       <AnimatePresence>
@@ -1247,6 +1309,14 @@ export default function App() {
           navigateTo('/contacto');
         }}
         lang={lang || 'es'}
+      />
+
+      <FacebookPublisherModal
+        isOpen={showFacebookModal}
+        onClose={() => setShowFacebookModal(false)}
+        user={user}
+        lang={lang || 'es'}
+        t={t}
       />
 
       <CookieConsentBanner

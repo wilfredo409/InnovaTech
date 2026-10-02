@@ -619,19 +619,19 @@ export function getSyncStatus() {
  * Filters against existing articles so 0 tokens are spent on articles already in DB.
  */
 export async function runDailyEditorialIngest(aiClient: GoogleGenAI | null, force: boolean = false): Promise<{ ingestedCount: number; skippedCount: number; message: string }> {
-  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+  const SYNC_INTERVAL_MS = 30 * 60 * 1000; // Check and ingest every 30 minutes in both preview and production
   const now = Date.now();
 
-  if (!force && (now - lastSyncTimestamp < ONE_DAY_MS)) {
-    const hoursLeft = Math.round((lastSyncTimestamp + ONE_DAY_MS - now) / 3600000);
+  if (!force && (now - lastSyncTimestamp < SYNC_INTERVAL_MS)) {
+    const minsLeft = Math.max(1, Math.round((lastSyncTimestamp + SYNC_INTERVAL_MS - now) / 60000));
     return {
       ingestedCount: 0,
       skippedCount: 0,
-      message: `Daily sync already completed. Next daily sync scheduled in ${hoursLeft} hours.`
+      message: `Sincronización reciente completada. Próxima actualización automática en ${minsLeft} minutos.`
     };
   }
 
-  console.log(`[InnovaTech Ingestion] Starting daily editorial ingestion at ${new Date().toISOString()}...`);
+  console.log(`[InnovaTech Ingestion] Starting news sync at ${new Date().toISOString()}...`);
   
   const parser = new Parser({
     headers: {
@@ -790,3 +790,46 @@ Guidelines:
     message: `Daily sync finished. Added ${totalIngested} new articles, skipped ${totalSkipped} existing items without spending tokens.`
   };
 }
+
+let newsSyncTimer: NodeJS.Timeout | null = null;
+
+/**
+ * Starts automatic background recurring news synchronization that runs identically
+ * in both preview and production environments.
+ */
+export function startNewsAutoSync(getAIClient: () => GoogleGenAI | null, intervalMinutes: number = 30): void {
+  if (newsSyncTimer) {
+    clearInterval(newsSyncTimer);
+    newsSyncTimer = null;
+  }
+
+  const ms = Math.max(5, intervalMinutes) * 60 * 1000;
+  console.log(`[InnovaTech News Sync] Sincronizador automático activo: revisando fuentes RSS cada ${intervalMinutes} minutos (producción & preview).`);
+
+  // Run initial check 4 seconds after boot
+  setTimeout(() => {
+    runDailyEditorialIngest(getAIClient(), false).catch(err => {
+      console.warn('[InnovaTech News Sync] Error en sincronización inicial:', err.message || err);
+    });
+  }, 4000);
+
+  // Background recurring scheduler
+  newsSyncTimer = setInterval(() => {
+    console.log('[InnovaTech News Sync] Ejecutando sincronización automática periódica...');
+    runDailyEditorialIngest(getAIClient(), false).catch(err => {
+      console.warn('[InnovaTech News Sync] Error en sincronización periódica:', err.message || err);
+    });
+  }, ms);
+}
+
+/**
+ * Stops automatic background news synchronization
+ */
+export function stopNewsAutoSync(): void {
+  if (newsSyncTimer) {
+    clearInterval(newsSyncTimer);
+    newsSyncTimer = null;
+    console.log('[InnovaTech News Sync] Sincronizador automático detenido.');
+  }
+}
+

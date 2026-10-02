@@ -2,13 +2,15 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   X, Moon, Sun, User, LogIn, LogOut, BookOpen, Play, 
-  MessageSquare, CornerDownRight, Globe, Check, Shield, Trash2, AlertTriangle, Mail, Info, FileText 
+  MessageSquare, CornerDownRight, Globe, Check, Shield, Trash2, AlertTriangle, Mail, Info, FileText,
+  Facebook, ExternalLink
 } from "lucide-react";
 import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { User as FirebaseUser } from "firebase/auth";
 import { Article } from "../types";
 import { handleFirestoreError, OperationType } from "../lib/firestore-errors";
+import { FACEBOOK_PAGE_URL, isAdminUser } from "../lib/utils";
 
 interface MenuDrawerProps {
   isOpen: boolean;
@@ -28,6 +30,7 @@ interface MenuDrawerProps {
   onOpenAbout?: () => void;
   onDeleteAccountData: () => Promise<void>;
   onOpenContactPage: () => void;
+  onOpenFacebookAdmin?: () => void;
 }
 
 interface HistoryItem {
@@ -80,7 +83,8 @@ export function MenuDrawer({
   onOpenTerms,
   onOpenAbout,
   onDeleteAccountData,
-  onOpenContactPage
+  onOpenContactPage,
+  onOpenFacebookAdmin
 }: MenuDrawerProps) {
   const [activeTab, setActiveTab] = useState<"history" | "videos" | "comments" | "replies">("history");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -382,6 +386,37 @@ export function MenuDrawer({
                   <span className="text-xs font-bold text-gray-800 dark:text-gray-100 truncate">contacto@innovatech.fun</span>
                 </div>
               </button>
+
+              {/* Facebook Official Page */}
+              <a
+                href={FACEBOOK_PAGE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 p-3 rounded-2xl bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/60 dark:hover:bg-blue-900/30 border border-blue-200/50 dark:border-blue-800/40 text-sm font-medium transition-all text-left w-full hover:scale-[1.01] group cursor-pointer"
+              >
+                <div className="p-2 bg-blue-600 text-white rounded-xl group-hover:scale-110 transition-transform shadow-sm shadow-blue-600/20">
+                  <Facebook className="w-4 h-4 fill-white" />
+                </div>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Comunidad Oficial</span>
+                  <span className="text-xs font-bold text-gray-800 dark:text-gray-100 truncate">Página de Facebook @InnovaTech</span>
+                </div>
+                <ExternalLink className="w-3.5 h-3.5 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+              </a>
+
+              {/* Facebook Admin / Publicador (Solo visible para smiwceron@gmail.com) */}
+              {onOpenFacebookAdmin && isAdminUser(user) && (
+                <button
+                  onClick={onOpenFacebookAdmin}
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-blue-50/40 dark:bg-blue-950/20 hover:bg-blue-100/50 dark:hover:bg-blue-900/30 text-xs font-semibold text-blue-700 dark:text-blue-300 transition-all text-left w-full cursor-pointer border border-blue-100 dark:border-blue-900/30 hover:scale-[1.01]"
+                >
+                  <span className="flex items-center gap-2">
+                    <Facebook className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                    <span>Panel de Publicaciones Facebook</span>
+                  </span>
+                  <span className="text-[10px] bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-md font-bold">Admin</span>
+                </button>
+              )}
 
               {/* Acerca de InnovaTech */}
               {onOpenAbout && (

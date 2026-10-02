@@ -10,7 +10,8 @@ import {
   getAllArticles,
   searchStoredArticles,
   runDailyEditorialIngest,
-  getSyncStatus
+  getSyncStatus,
+  startNewsAutoSync
 } from "./server/articleManager";
 import { cleanArticleTitle, getUniqueImage, ensureUniqueArticlesImages } from "./server/uniqueImages";
 import { 
@@ -22,7 +23,8 @@ import {
   stopFacebookScheduler,
   getFacebookSchedulerStatus,
   getNextUnpublishedArticle,
-  loadPublishHistory
+  loadPublishHistory,
+  clearPublishHistory
 } from "./server/facebookPublisher";
 
 dotenv.config({ override: true });
@@ -1537,7 +1539,20 @@ app.post("/api/sync-news", async (req, res) => {
 });
 
 // Automated Facebook Social Media Integration Routes
-app.get("/api/social/facebook/status", async (_req, res) => {
+const ADMIN_EMAIL = "smiwceron@gmail.com";
+
+function requireAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const adminEmail = (req.headers["x-admin-email"] as string || "").toLowerCase().trim();
+  if (adminEmail === ADMIN_EMAIL.toLowerCase()) {
+    return next();
+  }
+  return res.status(403).json({ 
+    success: false, 
+    error: `Acceso no autorizado. Este endpoint requiere autenticación con la cuenta de administrador (${ADMIN_EMAIL}).` 
+  });
+}
+
+app.get("/api/social/facebook/status", requireAdmin, async (_req, res) => {
   const { pageId, pageToken } = getActiveFacebookCredentials();
   const status = await verifyFacebookConnection();
   res.json({
@@ -1551,7 +1566,7 @@ app.get("/api/social/facebook/status", async (_req, res) => {
   });
 });
 
-app.post("/api/social/facebook/test-connection", async (req, res) => {
+app.post("/api/social/facebook/test-connection", requireAdmin, async (req, res) => {
   const { pageId, pageToken, save } = req.body || {};
   const status = await verifyFacebookConnection(pageId, pageToken);
   if (status.valid && save && pageId && pageToken) {
@@ -1560,7 +1575,7 @@ app.post("/api/social/facebook/test-connection", async (req, res) => {
   res.json(status);
 });
 
-app.post("/api/social/facebook/publish-latest", async (_req, res) => {
+app.post("/api/social/facebook/publish-latest", requireAdmin, async (_req, res) => {
   const articles = getAllArticles();
   if (!articles.length) {
     return res.status(404).json({ success: false, error: "No hay artículos disponibles para publicar." });
@@ -1569,7 +1584,7 @@ app.post("/api/social/facebook/publish-latest", async (_req, res) => {
   res.json(result);
 });
 
-app.post("/api/social/facebook/publish-next", async (_req, res) => {
+app.post("/api/social/facebook/publish-next", requireAdmin, async (_req, res) => {
   const articles = getAllArticles();
   const nextArticle = await getNextUnpublishedArticle(articles);
   if (!nextArticle) {
@@ -1590,7 +1605,7 @@ app.get("/api/social/facebook/scheduler/status", (_req, res) => {
   res.json(status);
 });
 
-app.post("/api/social/facebook/scheduler/start", (req, res) => {
+app.post("/api/social/facebook/scheduler/start", requireAdmin, (req, res) => {
   const { intervalMinutes } = req.body || {};
   const mins = typeof intervalMinutes === 'number' && intervalMinutes > 0 ? intervalMinutes : 30;
   startFacebookScheduler(getAllArticles, mins);
@@ -1602,7 +1617,7 @@ app.post("/api/social/facebook/scheduler/start", (req, res) => {
   });
 });
 
-app.post("/api/social/facebook/scheduler/stop", (_req, res) => {
+app.post("/api/social/facebook/scheduler/stop", requireAdmin, (_req, res) => {
   stopFacebookScheduler();
   const articles = getAllArticles();
   res.json({
@@ -1612,12 +1627,17 @@ app.post("/api/social/facebook/scheduler/stop", (_req, res) => {
   });
 });
 
-app.get("/api/social/facebook/history", (_req, res) => {
+app.get("/api/social/facebook/history", requireAdmin, (_req, res) => {
   const history = loadPublishHistory();
   res.json({ history, count: history.length });
 });
 
-app.post("/api/social/facebook/publish/:id", async (req, res) => {
+app.post("/api/social/facebook/history/clear", requireAdmin, (_req, res) => {
+  clearPublishHistory();
+  res.json({ success: true, message: "Historial de publicaciones reiniciado a cero. Los artículos se publicarán como nuevos posts públicos." });
+});
+
+app.post("/api/social/facebook/publish/:id", requireAdmin, async (req, res) => {
   const { id } = req.params;
   const articles = getAllArticles();
   const article = articles.find(a => a.id === id);
@@ -1718,29 +1738,23 @@ async function startServer() {
   // Initialize persistent articles database
   initArticlesDatabase();
 
-  // Run daily editorial ingestion in the background (respects 24h interval and skips existing news with 0 token spend)
-  setTimeout(() => {
-    runDailyEditorialIngest(getAI(), false).catch((err) => {
-      console.warn("Initial daily ingestion background check:", err.message || err);
-    });
-  }, 3000);
+  // News auto-sync scheduler: runs automatically every 30 minutes in BOTH preview and production
+  startNewsAutoSync(getAI, 30);
 
-  // Automated Facebook publishing: disabled in local/preview development to avoid publishing unreleased articles
-  if (process.env.NODE_ENV === "production" && process.env.ENABLE_FACEBOOK_SCHEDULER === "true") {
-    setTimeout(async () => {
-      try {
-        const fbCheck = await verifyFacebookConnection();
-        if (fbCheck.valid) {
-          console.log("[InnovaTech Server] Producción: Iniciando publicador de Facebook cada 30 minutos...");
-          startFacebookScheduler(getAllArticles, 30);
-        }
-      } catch (e: any) {
-        console.warn("[InnovaTech Server] Error verificando Facebook en producción:", e.message);
+  // Automated Facebook publishing
+  setTimeout(async () => {
+    try {
+      const fbCheck = await verifyFacebookConnection();
+      if (fbCheck.valid) {
+        console.log("[InnovaTech Server] Iniciando publicador automático de publicaciones en Facebook cada 30 minutos...");
+        startFacebookScheduler(getAllArticles, 30);
+      } else {
+        console.warn("[InnovaTech Server] Publicador de Facebook no iniciado:", fbCheck.error || fbCheck.diagnostic);
       }
-    }, 5000);
-  } else {
-    console.log("[InnovaTech Server] Entorno local/preview: Publicador automático de Facebook en pausa (solo habilitado en la app lanzada en producción).");
-  }
+    } catch (e: any) {
+      console.warn("[InnovaTech Server] Error verificando Facebook:", e.message);
+    }
+  }, 5000);
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
