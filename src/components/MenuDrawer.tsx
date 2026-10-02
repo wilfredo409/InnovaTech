@@ -317,10 +317,10 @@ export function MenuDrawer({
                   </p>
                   <button
                     onClick={onLogin}
-                    className="flex items-center justify-center gap-2 w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all mb-3"
+                    className="flex items-center justify-center gap-2 w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all mb-3 cursor-pointer"
                   >
                     <LogIn className="w-4 h-4" />
-                    <span>Iniciar sesión con Google</span>
+                    <span>Iniciar sesión (Google o Correo)</span>
                   </button>
                   <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium px-2 leading-relaxed">
                     Al iniciar sesión, aceptas nuestra{" "}

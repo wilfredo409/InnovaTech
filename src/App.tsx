@@ -15,12 +15,13 @@ import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
 import { TermsConditionsModal } from './components/TermsConditionsModal';
 import { AboutUsModal } from './components/AboutUsModal';
 import { FacebookPublisherModal } from './components/FacebookPublisherModal';
+import { AuthModal } from './components/AuthModal';
 import { CookieConsentBanner } from './components/CookieConsentBanner';
 import { Footer } from './components/Footer';
 import { ContactPage } from './components/ContactPage';
 import { INITIAL_ARTICLES } from './data/initialArticles';
 import { ensureClientUniqueArticles } from './lib/uniqueImages';
-import { auth, db } from './lib/firebase';
+import { auth, db, getRedirectResult } from './lib/firebase';
 import { handleFirestoreError, OperationType } from './lib/firestore-errors';
 import { getApiUrl, FACEBOOK_PAGE_URL } from './lib/utils';
 import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
@@ -232,6 +233,7 @@ export default function App() {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showFacebookModal, setShowFacebookModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [show404, setShow404] = useState(false);
   const [showContactPage, setShowContactPage] = useState(false);
 
@@ -346,6 +348,17 @@ export default function App() {
   };
 
   useEffect(() => {
+    // Check if user authenticated via redirect fallback
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          showToast("¡Sesión iniciada con éxito!");
+        }
+      })
+      .catch((err) => {
+        console.warn("Redirect auth check:", err);
+      });
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
@@ -604,13 +617,8 @@ export default function App() {
     }
   };
 
-  const handleLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (e) {
-      console.error("Login failed", e);
-    }
+  const handleLogin = () => {
+    setShowAuthModal(true);
   };
 
   const handleLogout = async () => {
@@ -1315,6 +1323,14 @@ export default function App() {
         isOpen={showFacebookModal}
         onClose={() => setShowFacebookModal(false)}
         user={user}
+        lang={lang || 'es'}
+        t={t}
+      />
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={() => showToast("¡Sesión iniciada con éxito!")}
         lang={lang || 'es'}
         t={t}
       />
